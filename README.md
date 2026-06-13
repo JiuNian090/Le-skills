@@ -127,37 +127,6 @@ steps:
 
 技能未安装时 exit 1，已就绪 exit 0。
 
-## 发布到 npm
-
-### 首次发布前配置
-
-npm 现已推荐使用 **Trusted Publishing**（基于 OIDC），无需管理任何 token。
-
-**配置 Trusted Publishing（一次性的，在 npm 官网操作）：**
-
-1. 打开 https://www.npmjs.com/settings/jiunian090/packages （或你的包管理页面）
-2. 搜索你的包 `le-skills`，点进去
-3. 找到 **Access** → 点 **Manage CI/CD** → 你会看到 **Trusted Publishing** 选项
-4. 选择 **GitHub Actions**
-5. 填入：
-   - **GitHub Owner:** `JiuNian090`
-   - **GitHub Repo:** `Le-skills`
-   - **Environment:** 留空（或选 main）
-6. 点 **Save**
-
-> 不同 npm 版本的界面可能略有差异，核心就是配置 npm 信任 `JiuNian090/Le-skills` 这个仓库的 GitHub Actions OIDC 身份。
-
-**验证发布：**
-
-```bash
-git tag v1.0.0
-git push origin main --tags
-```
-
-GitHub Actions 会自动触发 `npm publish --provenance`，无需任何 token 或密钥。前往 https://github.com/JiuNian090/Le-skills/actions 查看状态。
-
-如果之前创建过 `NPM_TOKEN` 的 GitHub Secret，现在可以删掉它，不再需要了。
-
 ## 开源协议
 
 MIT
