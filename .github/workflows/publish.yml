@@ -1,4 +1,4 @@
-# Publish to npm when a tag is pushed
+# Publish to npm via Trusted Publishing (OIDC) when a tag is pushed
 name: publish
 
 on:
@@ -11,7 +11,7 @@ jobs:
     runs-on: ubuntu-latest
     permissions:
       contents: read
-      id-token: write
+      id-token: write   # Required for OIDC-based Trusted Publishing
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
@@ -23,17 +23,5 @@ jobs:
       - name: Install dependencies
         run: npm ci
 
-      - name: Verify npm token
-        run: |
-          if [ -z "$NODE_AUTH_TOKEN" ]; then
-            echo "::error::NPM_TOKEN secret is not set."
-            echo "::error::Go to GitHub repo → Settings → Secrets and variables → Actions"
-            echo "::error::Add a repository secret named NPM_TOKEN with your npm automation token."
-            exit 1
-          fi
-          echo "NPM_TOKEN is set (length: ${#NODE_AUTH_TOKEN})"
-
       - name: Publish to npm
         run: npm publish --provenance
-        env:
-          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
