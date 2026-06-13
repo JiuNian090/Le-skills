@@ -1,0 +1,18 @@
+# Reasonix session state
+.reasonix/
+
+# Node.js
+node_modules/
+npm-debug.log*
+
+# MCPTool
+.codegraph/
+
+# OS artifacts
+.DS_Store
+Thumbs.db
+
+# Environment (if any)
+.env
+.env.local
+*.local

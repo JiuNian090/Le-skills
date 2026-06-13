@@ -1,0 +1,43 @@
+{
+  "name": "le-skills",
+  "version": "1.0.0",
+  "type": "module",
+  "description": "Project skills & rules manager — one command to install AI agent skills into any project",
+  "keywords": [
+    "ai-skills",
+    "project-skills",
+    "agent-skills",
+    "claude-skills",
+    "cursor-skills",
+    "windsurf-skills",
+    "skills-manager",
+    "bootstrap",
+    "agent-rules"
+  ],
+  "homepage": "https://github.com/JiunianTV/Le-Skills",
+  "bugs": {
+    "url": "https://github.com/JiunianTV/Le-Skills/issues"
+  },
+  "license": "MIT",
+  "author": "JiunianTV",
+  "bin": {
+    "le-skills": "bin/le-skills.js"
+  },
+  "files": [
+    "bin/",
+    ".agents/",
+    "scripts/",
+    "LICENSE",
+    "README.md"
+  ],
+  "engines": {
+    "node": ">=18"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/JiunianTV/Le-Skills.git"
+  },
+  "publishConfig": {
+    "access": "public"
+  }
+}

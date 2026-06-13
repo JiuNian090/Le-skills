@@ -1,0 +1,20 @@
+# Dev / CI
+.git/
+.github/
+.reasonix/
+.gitignore
+.prettierrc*
+.editorconfig*
+*.test.js
+*.spec.js
+test/
+tests/
+__tests__/
+TODO.md
+
+# Source docs (not needed at runtime)
+prompt/
+
+# OS artifacts
+.DS_Store
+Thumbs.db
