@@ -127,17 +127,6 @@ steps:
 
 技能未安装时 exit 1，已就绪 exit 0。
 
-## 发布到 npm
-
-```bash
-# 打 tag 即自动发布（GitHub Actions）
-git tag v1.0.0
-git push origin v1.0.0
-
-# 或手动发布
-npm publish
-```
-
 ## 开源协议
 
 MIT
