@@ -30,6 +30,10 @@
     "LICENSE",
     "README.md"
   ],
+  "scripts": {
+    "bootstrap": "node scripts/bootstrap.js",
+    "bootstrap:check": "node scripts/bootstrap.js --check"
+  },
   "engines": {
     "node": ">=18"
   },

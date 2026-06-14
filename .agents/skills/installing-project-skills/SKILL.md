@@ -28,6 +28,38 @@ Search `**/SKILL.md` and `**/skill.md` across the project. Target dirs: `.agents
 
 **Self-managed tools (DO NOT migrate):** GitNexus, codegraph — they manage their own skill dirs via CLI.
 
+### 2.5. Scan & Extract Existing Rules from AGENTS.md / CLAUDE.md
+
+**Why:** Projects often have version management and code standards rules embedded in AGENTS.md or CLAUDE.md. These should be extracted to `.agents/rules/` so they become discoverable by le-skills and don't duplicate across files.
+
+**Detection:** Scan AGENTS.md and CLAUDE.md for these patterns:
+
+| Rule type | Search keywords |
+|-----------|----------------|
+| 版本管理 | 版本管理、版本更新、版本号、versioning、changelog、更新日志、release |
+| 代码规范 | 代码规范、编码规范、提交规范、code style、commit convention、代码风格、lint |
+
+**Action for each detected match:**
+
+1. **Ask the user:** "检测到 AGENTS.md 中包含版本管理/代码规范规则。要提取到 `.agents/rules/` 并替换为引用吗？"
+2. **If yes:** Extract the section(s) to the corresponding rule file (`version-management-rules.md` or `code-standards-rules.md`), then replace the original section in AGENTS.md with a short reference: `> **版本管理：** 详见 \`.agents/rules/version-management-rules.md\``
+3. **If no:** Leave as-is, but record in INDEX.md as "未提取（用户选择保留）"
+4. **If AGENTS.md doesn't exist:** Generate AGENTS.md with the required loading chain reference
+
+**Loading chain:** Ensure AGENTS.md has the mandatory rule-loading instruction. If not, inject:
+```markdown
+---
+## le-skills 规则加载链
+
+**每次任务开始前必须加载以下规则文件：**
+- `.agents/rules/project-rules.md` — 全量加载
+- `.agents/rules/skill-scheduling-rules.md` — 按需加载
+- `.agents/rules/code-standards-rules.md` — 按需加载
+- `.agents/rules/version-management-rules.md` — 按需加载
+```
+
+**CLAUDE.md:** If CLAUDE.md exists and doesn't have `@AGENTS.md`, prepend it. This is automatically handled by `npx le-skills install`.
+
 ### 3. Integrate Upstream Repos
 
 Clone or pull from these skill sources. Use the **skill mapping** below to extract applicable skills — do NOT blindly copy all files.
@@ -87,6 +119,12 @@ Show the user a structured summary:
   □ skill-scheduling-rules.md
   □ changelog-rules.md
   □ project-rules.md
+  □ version-management-rules.md  ← 如 AGENTS.md 中有版本管理规则
+  □ code-standards-rules.md      ← 如 AGENTS.md 中有代码规范规则
+
+【待注入】加载链
+  □ AGENTS.md → 强制加载 .agents/rules/
+  □ CLAUDE.md → @AGENTS.md（如不存在）
 ```
 
 #### 5b. Offer Customization Actions
