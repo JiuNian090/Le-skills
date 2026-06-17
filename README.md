@@ -107,7 +107,7 @@ npx psmgr install ../my-project
 ### 方式二：Git 子目录复制
 
 ```bash
-git clone --depth 1 https://github.com/JiunianTV/Le-Skills.git .psm-tmp
+git clone --depth 1 https://github.com/JiuNian090/PSM.git .psm-tmp
 cp -r .psm-tmp/.agents ./your-project/
 cp -r .psm-tmp/scripts ./your-project/
 rm -rf .psm-tmp

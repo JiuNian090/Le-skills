@@ -17,9 +17,9 @@
     "bootstrap",
     "agent-rules"
   ],
-  "homepage": "https://github.com/JiunianTV/Le-Skills",
+  "homepage": "https://github.com/JiuNian090/PSM",
   "bugs": {
-    "url": "https://github.com/JiunianTV/Le-Skills/issues"
+    "url": "https://github.com/JiuNian090/PSM/issues"
   },
   "license": "MIT",
   "author": "JiunianTV",
@@ -42,7 +42,7 @@
   },
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/JiunianTV/Le-Skills.git"
+    "url": "git+https://github.com/JiuNian090/PSM.git"
   },
   "publishConfig": {
     "access": "public"
