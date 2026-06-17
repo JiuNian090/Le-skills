@@ -104,7 +104,7 @@ function printGuidance(projectType, skillsStatus) {
     console.log(`  dir ${ROOT_DIR}\\.agents\\skills\\`);
     console.log();
     info('如需更新技能，运行:');
-    console.log('  npx psm install --yes');
+    console.log('  npx psmgr install --yes');
   }
 
   // IDE hints

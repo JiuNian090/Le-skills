@@ -1,4 +1,4 @@
-# PSM (Project Skills Manager)
+# PSMgr (Project Skills Manager)
 
 > **本项目是 PSM 技能包的源仓库。** 技能定义和规则以 `.agents/` 目录为单一数据源。
 > 安装到目标项目后，Agent 应直接读取目标项目中的 `.agents/skills/INDEX.md` 获取技能树。
@@ -16,7 +16,8 @@
 | 查看全量规则 | `.agents/rules/project-rules.md` |
 | 查看调度规则 | `.agents/rules/skill-scheduling-rules.md` |
 | 查看生命周期规则 | `.agents/rules/skill-lifecycle-rules.md` |
-| 安装 CLI 工具 | `npx psm install` |
+| 安装 CLI 工具 | `npx psmgr install` |
+| 管理工具依赖 | `.agents/tools.json` + `npx psmgr tool list/install/verify` |
 
 ---
 

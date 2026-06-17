@@ -1,9 +1,10 @@
 {
-  "name": "psm",
+  "name": "psmgr",
   "version": "1.0.0",
   "type": "module",
-  "description": "PSM (Project Skills Manager) — one command to install AI agent skills & rules into any project",
+  "description": "PSMgr (Project Skills Manager) — one command to install AI agent skills & rules into any project",
   "keywords": [
+    "psmgr",
     "psm",
     "project-skills-manager",
     "ai-skills",

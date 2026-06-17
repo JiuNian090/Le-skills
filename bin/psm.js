@@ -2,14 +2,14 @@
 // ============================================================
 // psm — Project Skills Manager CLI
 // ============================================================
-//   npx psm install [-y] [--preview] [target]
-//   npx psm check   [target]
-//   npx psm info    [target]
-//   npx psm list
-//   npx psm outdated
-//   npx psm update
-//   npx psm version
-//   npx psm --help
+//   npx psmgr install [-y] [--preview] [target]
+//   npx psmgr check   [target]
+//   npx psmgr info    [target]
+//   npx psmgr list
+//   npx psmgr outdated
+//   npx psmgr update
+//   npx psmgr version
+//   npx psmgr --help
 // ============================================================
 
 import fs from 'node:fs';
@@ -220,7 +220,7 @@ function isInstalled(target) {
 
 function getLatestVersion() {
   try {
-    const out = execSync('npm view psm version', {
+    const out = execSync('npm view psmgr version', {
       encoding: 'utf-8',
       timeout: 5000,
       stdio: ['ignore', 'pipe', 'pipe'],
@@ -434,7 +434,7 @@ function generateIndexMd(target) {
   const l1Keys = Object.keys(treeMap);
   let md = "# 技能树 INDEX" + NL + NL;
   md += "> 🎯**任何 AI Agent / AI IDE 的统一导航入口** — 安装后优先读取此文件了解技能结构" + NL;
-  md += "> 由 psm install 自动生成 — 运行 " + BK + "npx psm install --yes" + BK + " 重新生成" + NL + NL;
+  md += "> 由 psm install 自动生成 — 运行 " + BK + "npx psmgr install --yes" + BK + " 重新生成" + NL + NL;
   md += "---" + NL + NL;
   md += "## 🌳 技能树总览" + NL + NL + BK + BK + BK + NL;
   md += "L0: managing-project-skills（根节点 — 用户入口）" + NL + "  │" + NL;
@@ -929,44 +929,44 @@ function cmdHelp() {
 ${green('psm v' + VERSION)}
 
 ${cyan('Usage:')}
-  npx psm install [-y] [--preview] [target]
-  npx psm check        [target]
-  npx psm info         [target]
-  npx psm list
-  npx psm registry
-  npx psm discover     [target]
-  npx psm outdated
-  npx psm update
-  npx psm version / -v
-  npx psm help / -h
+  npx psmgr install [-y] [--preview] [target]
+  npx psmgr check        [target]
+  npx psmgr info         [target]
+  npx psmgr list
+  npx psmgr registry
+  npx psmgr discover     [target]
+  npx psmgr outdated
+  npx psmgr update
+  npx psmgr version / -v
+  npx psmgr help / -h
 
 ${cyan('Install options:')}
   -y, --yes          Skip prompts, overwrite existing
   --preview          Show install plan only, do not install
 
 ${cyan('Registry commands:')}
-  npx psm registry              List all skill sources from registry
-  npx psm discover [target]     Show skills matching this project's tech stack
+  npx psmgr registry              List all skill sources from registry
+  npx psmgr discover [target]     Show skills matching this project's tech stack
 
 ${cyan('Tool commands:')}
-  npx psm tool list [target]            List tools & installation status
-  npx psm tool install <name> [target]  Install a tool (CLI or MCP)
-  npx psm tool verify [target]          Verify installed tool commands work
-  npx psm tool setup [target]           Scan skills & install missing tools
+  npx psmgr tool list [target]            List tools & installation status
+  npx psmgr tool install <name> [target]  Install a tool (CLI or MCP)
+  npx psmgr tool verify [target]          Verify installed tool commands work
+  npx psmgr tool setup [target]           Scan skills & install missing tools
 
 ${cyan('Examples:')}
-  npx psm install                  Install into current directory
-  npx psm install ../my-app        Install into ../my-app
-  npx psm install --preview        Preview install plan
-  npx psm install -y               Quiet install, overwrite existing
-  npx psm check                    Check current directory
-  npx psm info                     Show version + env + status
-  npx psm registry                 List available skill sources
-  npx psm discover                 Discover matching skills for this project
-  npx psm tool list                List tools and their status
-  npx psm tool install codegraph   Install codegraph (CLI or MCP)
-  npx psm tool setup               Auto-detect and install missing tools
-  npx psm tool verify               Verify installed tool commands
+  npx psmgr install                  Install into current directory
+  npx psmgr install ../my-app        Install into ../my-app
+  npx psmgr install --preview        Preview install plan
+  npx psmgr install -y               Quiet install, overwrite existing
+  npx psmgr check                    Check current directory
+  npx psmgr info                     Show version + env + status
+  npx psmgr registry                 List available skill sources
+  npx psmgr discover                 Discover matching skills for this project
+  npx psmgr tool list                List tools and their status
+  npx psmgr tool install codegraph   Install codegraph (CLI or MCP)
+  npx psmgr tool setup               Auto-detect and install missing tools
+  npx psmgr tool verify               Verify installed tool commands
 `);
 }
 
@@ -1900,7 +1900,7 @@ function cmdOutdated() {
     process.exit(EXIT.OK);
   } else {
     console.log(yellow(`psm v${VERSION} installed, v${latest} available.`));
-    console.log(cyan('  Run « npx psm update » to upgrade.'));
+    console.log(cyan('  Run « npx psmgr update » to upgrade.'));
     process.exit(EXIT.ERR_OUTDATED);
   }
 }
@@ -1920,12 +1920,12 @@ function cmdUpdate() {
 
   console.log(cyan(`Updating psm: v${VERSION} → v${latest} …`));
   try {
-    execSync(`npm install -g psm@latest`, {
+    execSync(`npm install -g psmgr@latest`, {
       stdio: 'inherit',
     });
     console.log(green(`Updated to v${latest}.`));
   } catch {
-    die('Update failed. Try: npm install -g psm@latest');
+    die('Update failed. Try: npm install -g psmgr@latest');
   }
 }
 
