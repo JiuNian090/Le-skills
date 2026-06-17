@@ -1,9 +1,12 @@
 ---
 name: installing-project-skills
 description: Use when installing skills for a new project, or when the user asks to update, upgrade, uninstall, or check status of project skills
+tree: lifecycle/install
 ---
 
 # Installing Project Skills
+
+> 📍 **技能树位置：L1/L2 — 生命周期管理/安装** — 受 managing-project-skills（根节点）分派
 
 ## Overview
 

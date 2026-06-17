@@ -376,65 +376,80 @@ function hasAgentsRef(content) {
 // ---- INDEX.md Generation ----
 
 function generateIndexMd(target) {
-  const agentsSkills = path.join(target, '.agents', 'skills');
-  const agentsRules = path.join(target, '.agents', 'rules');
-
+  var NL = String.fromCharCode(92,110);
+  var BK = String.fromCharCode(96);
+  var Q = String.fromCharCode(34);
+  const agentsSkills = path.join(target, ".agents", "skills");
+  const agentsRules = path.join(target, ".agents", "rules");
   const skills = [];
   if (fs.existsSync(agentsSkills)) {
     for (const entry of fs.readdirSync(agentsSkills, { withFileTypes: true })) {
       if (!entry.isDirectory()) continue;
-      const skillMd = path.join(agentsSkills, entry.name, 'SKILL.md');
+      const skillMd = path.join(agentsSkills, entry.name, "SKILL.md");
       if (!fs.existsSync(skillMd)) continue;
-      const content = fs.readFileSync(skillMd, 'utf-8');
-      const name = content.match(/^name:\s*(.+)/m)?.[1]?.trim() || entry.name;
-      const desc = content.match(/^description:\s*(.+)/m)?.[1]?.trim() || '(no description)';
-      skills.push({ dir: entry.name, name, desc });
+      const content = fs.readFileSync(skillMd, "utf-8");
+      const name = content.match(/^name:s*(.+)/m)?.[1]?.trim() || entry.name;
+      const desc = content.match(/^description:s*(.+)/m)?.[1]?.trim() || "(no description)";
+      const treePath = content.match(/^tree:s*(.+)/m)?.[1]?.trim() || "";
+      skills.push({ dir: entry.name, name, desc, treePath });
     }
   }
-
-  const rules = [];
-  if (fs.existsSync(agentsRules)) {
-    for (const f of fs.readdirSync(agentsRules)) {
-      if (!f.endsWith('.md')) continue;
-      const loadType = f === 'project-rules.md' ? '全量加载' : '按需加载';
-      rules.push({ file: f, loadType });
-    }
-  }
-
-  let md = '# 技能清单 INDEX\n\n';
-  md += '> 由 le-skills install 自动生成\n\n';
-  md += '## 已安装技能\n\n';
-  md += '| 技能 | 用途 | 调度优先级 |\n';
-  md += '|------|------|-----------|\n';
-
+  const labels = { lifecycle: "🔧 生命周期管理", schedule: "📋 任务调度", release: "📦 版本发布" };
+  const treeMap = {};
   for (const s of skills) {
-    const link = `[${s.name}](./${s.dir}/SKILL.md)`;
-    const priority = s.dir === 'managing-project-skills' ? '⭐ 最高（入口）'
-                  : s.dir === 'installing-project-skills' ? '⭐ 高'
-                  : '⭐ 中';
-    md += `| ${link} | ${s.desc} | ${priority} |\n`;
+    if (s.treePath === "root") continue;
+    const parts = s.treePath.split("/");
+    const l1Key = parts[0] || "other";
+    if (!treeMap[l1Key]) treeMap[l1Key] = { label: labels[l1Key] || l1Key, children: [] };
+    treeMap[l1Key].children.push({ dir: s.dir, name: s.name, desc: s.desc });
   }
-
-  md += '\n## 依赖规则\n\n';
-  md += '| 规则文件 | 加载方式 |\n';
-  md += '|---------|---------|\n';
-  for (const r of rules) {
-    md += `| \`.agents/rules/${r.file}\` | ${r.loadType} |\n`;
+  const l1Keys = Object.keys(treeMap);
+  let md = "# 技能树 INDEX" + NL + NL;
+  md += "> 🎯**任何 AI Agent / AI IDE 的统一导航入口** — 安装后优先读取此文件了解技能结构" + NL;
+  md += "> 由 le-skills install 自动生成 — 运行 " + BK + "npx le-skills install --yes" + BK + " 重新生成" + NL + NL;
+  md += "---" + NL + NL;
+  md += "## 🌳 技能树总览" + NL + NL + BK + BK + BK + NL;
+  md += "L0: managing-project-skills（根节点 — 用户入口）" + NL + "  │" + NL;
+  for (let i = 0; i < l1Keys.length; i++) {
+    const node = treeMap[l1Keys[i]];
+    const isLast = i === l1Keys.length - 1;
+    md += (isLast ? "  └── " : "  ├── ") + "L1: " + node.label + NL;
+    for (let j = 0; j < node.children.length; j++) {
+      const c = node.children[j];
+      const cJoin = j === node.children.length - 1 ? "        └── " : "  │     ├── ";
+      md += cJoin + "L2: " + c.name + " — " + c.desc.slice(0, 60) + NL;
+    }
   }
-
-  md += '\n## ⚡ 按需加载决策表（Agent 执行指南）\n\n';
-  md += '每次收到用户消息后，按以下规则决定是否加载额外规则文件：\n\n';
-  md += '| 触发条件 | 操作 | 加载方式 |\n';
-  md += '|---------|------|---------|\n';
-  md += '| 用户说「更新更新日志」「发布」「打 tag」 | 读取 `version-management-rules.md` 并应用 | 按需加载 |\n';
-  md += '| 用户说「修改代码」「新增」「提交代码」 | 读取 `code-standards-rules.md` 检查规范 | 按需加载 |\n';
-  md += '| 用户说「安装/更新/卸载技能」 | 读取 `skill-lifecycle-rules.md` 执行生命周期 | 按需加载 |\n';
-  md += '| 技能执行时编排任务 | 读取 `skill-scheduling-rules.md` 决定调度策略 | 按需加载 |\n';
-  md += '| 用户说「更新更新日志为 vx.x.x」 | 读取 `changelog-rules.md` 生成更新日志 | 按需加载 |\n';
-  md += '| 未匹配以上条件 | 仅使用 `project-rules.md`（已全量加载） | 全量加载 |\n';
-
-  md += '\n> **注意：** 本 INDEX.md 由 le-skills 维护，运行 `npx le-skills install --yes` 会重新生成。\n';
-
+  md += BK + BK + BK + NL + NL;
+  md += "---" + NL + NL;
+  md += "## 🛭 导航指南（任何 Agent 通用）" + NL + NL;
+  md += "### 1. 用户发来消息 → 2. 匹配 L1 类别 → 3. 加载 L2 技能" + NL + NL;
+  md += "| 用户说/场景 | → 匹配 L1 | → 加载 L2 技能 |" + NL + "|------------|----------|---------------|" + NL;
+  const triggers = { "installing-project-skills": "“安装/更新/卸载/查看技能”", "scheduling-project-skills": "多技能编排/判断难度", "generating-changelogs": "“更新更新日志为 vx.x.x”" };
+  for (const key of l1Keys) {
+    for (const child of treeMap[key].children) {
+      const trigger = triggers[child.dir] || "相关任务";
+      md += "| " + trigger + " | " + treeMap[key].label + " | " + BK + child.dir + BK + " |" + NL;
+    }
+  }
+  md += "| “版本管理” / “版本规范” | 📦 版本发布 | 检查 " + BK + "version-management-rules.md" + BK + " |" + NL + NL;
+  md += "> **调用方式：** 任何 Agent 读取此表后，根据用户输入匹配第二列 L1 类别，然后直接读取 L2 对应的 SKILL.md 文件并执行。" + NL + NL;
+  md += "---" + NL + NL;
+  md += "## 📂 文件索引" + NL + NL + "| 文件 | 树路径 | 用途 |" + NL + "|------|-------|------|" + NL;
+  md += "| .agents/skills/managing-project-skills/SKILL.md | root | 根节点，L0 入口调度 |" + NL;
+  for (const s of skills) {
+    if (s.treePath === "root") continue;
+    md += "| " + s.dir + "/SKILL.md | " + s.treePath + " | " + s.desc.slice(0, 60) + " |" + NL;
+  }
+  md += "---" + NL + NL;
+  md += "## ⚡ 按需加载决策表" + NL + NL + "| 触发条件 | 操作 | 加载方式 |" + NL + "|---------|------|---------|" + NL;
+  md += "| 用户说「更新更新日志」「发布」「打 tag」 | 读取 version-management-rules.md 并应用 | 按需加载 |" + NL;
+  md += "| 用户说「修改代码」「新增」「提交代码」 | 读取 code-standards-rules.md 检查规范 | 按需加载 |" + NL;
+  md += "| 用户说「安装/更新/卸载技能」 | 读取 skill-lifecycle-rules.md 执行生命周期 | 按需加载 |" + NL;
+  md += "| 技能执行时编排任务 | 读取 skill-scheduling-rules.md 决定调度策略 | 按需加载 |" + NL;
+  md += "| 用户说「更新更新日志为 vx.x.x」 | 读取 changelog-rules.md 生成更新日志 | 按需加载 |" + NL;
+  md += "| 未匹配以上条件 | 仅使用 project-rules.md（已全量加载） | 全量加载 |" + NL + NL;
+  md += "> **注意：** 本 INDEX.md 由 le-skills 维护。任何 AI IDE 均可通过读取此文件理解技能树结构。" + NL;
   return md;
 }
 

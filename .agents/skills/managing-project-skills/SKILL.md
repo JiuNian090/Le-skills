@@ -1,9 +1,13 @@
 ---
 name: managing-project-skills
 description: Use when the user asks to install, update, upgrade, uninstall, or check status of project skills and rules, or when setting up skills for a new project
+tree: root
 ---
 
 # Managing Project Skills
+
+> 📍 **技能树位置：L0 — 根节点** — 所有技能调度的统一入口
+> 子节点：L1「生命周期管理」→ [installing-project-skills] / L1「任务调度」→ [scheduling-project-skills] / L1「版本发布」→ [generating-changelogs]
 
 ## Overview
 
@@ -35,19 +39,39 @@ If INDEX.md missing, print:
 ### 4. Proceed
 Then proceed to [installing-project-skills] when the user confirms.
 
-## Dispatch Logic
+## 技能树调度（L0 → L1 → L2）
 
-| User intent | Sub-skill to load |
-|---|---|
-| "安装技能和规则" / "setup skills" / 首次项目配置 | [installing-project-skills] — full install flow（也可先运行 `node scripts/bootstrap.js` 查看项目检测报告） |
-| "更新技能" / "升级技能" / "同步技能" | [installing-project-skills] — upgrade flow（也可先运行 `npx le-skills install --preview` 查看更新计划） |
-| "卸载技能 xxx" | [installing-project-skills] — uninstall flow |
-| "查看技能" / "技能状态" | [installing-project-skills] — status check |
-| 技能执行时编排任务 | [scheduling-project-skills] |
-| "更新更新日志为 vx.x.x" | [generating-changelogs] |
-| "版本管理规则" / "版本规范" / "版本号" | 检查 `.agents/rules/version-management-rules.md` 是否存在，缺失则提示安装 |
+> 使用树形分层调度：先匹配 L1 类别（用户意图所属域），再分派到 L2 具体技能。
+> 完整的技能树结构见 `.agents/skills/INDEX.md`
 
-## Cross-references
+### 技能树结构
+
+```
+L0: managing-project-skills（根节点 — 统一入口）
+  │
+  ├── L1: 🔧 生命周期管理
+  │     └── L2: [installing-project-skills] — 安装/更新/卸载/查看
+  │
+  ├── L1: 📋 任务调度
+  │     └── L2: [scheduling-project-skills] — 编排/难度分级/场景映射
+  │
+  └── L1: 📦 版本发布
+        └── L2: [generating-changelogs] — 更新日志生成
+```
+
+### L0 → L1 匹配规则
+
+| 用户意图 | 匹配的 L1 类别 | 匹配后再加载的 L2 技能 |
+|---------|---------------|----------------------|
+| "安装技能和规则" / "setup skills" / 首次配置 | 🔧 生命周期管理 | [installing-project-skills] — full install flow |
+| "更新技能" / "升级技能" / "同步技能" | 🔧 生命周期管理 | [installing-project-skills] — upgrade flow |
+| "卸载技能 xxx" | 🔧 生命周期管理 | [installing-project-skills] — uninstall flow |
+| "查看技能" / "技能状态" | 🔧 生命周期管理 | [installing-project-skills] — status check |
+| 技能执行时编排任务 | 📋 任务调度 | [scheduling-project-skills] |
+| "更新更新日志为 vx.x.x" / "changelog" | 📦 版本发布 | [generating-changelogs] |
+| "版本管理规则" / "版本规范" / "版本号" | 📦 版本发布 | 检查 .agents/rules/version-management-rules.md |
+
+## Cross-references## Cross-references
 
 - **REQUIRED SUB-SKILL:** [installing-project-skills] — lifecycle management
 - **REQUIRED SUB-SKILL:** [scheduling-project-skills] — task orchestration

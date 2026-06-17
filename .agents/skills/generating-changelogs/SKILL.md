@@ -1,9 +1,12 @@
 ---
 name: generating-changelogs
 description: Use when the user says "更新更新日志为 vx.x.x" or "update changelog" or any request to generate or update a CHANGELOG.md from git history
+tree: release/changelog
 ---
 
 # Generating Changelogs
+
+> 📍 **技能树位置：L1/L2 — 版本发布/更新日志** — 受 managing-project-skills（根节点）分派
 
 ## Overview
 

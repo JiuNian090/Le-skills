@@ -1,9 +1,12 @@
 ---
 name: scheduling-project-skills
 description: Use when orchestrating multiple skills for a task — determining execution order, parallelism, and difficulty grading. Also use when the user asks how skills are dispatched
+tree: schedule/orchestrate
 ---
 
 # Scheduling Project Skills
+
+> 📍 **技能树位置：L1/L2 — 任务调度/编排** — 受 managing-project-skills（根节点）分派
 
 ## Overview
 
@@ -20,20 +23,12 @@ Defines how skills are selected, ordered, and executed: difficulty grading (L1-L
 
 **L3/L4 special rule:** If `brainstorming` skill is installed, call it first to decompose the task before dispatching other skills.
 
-## Scenario-to-Skill Mapping
+## 技能调度（参考技能树）
 
-| Scenario | Keywords | Pipeline | Mode |
-|---|---|---|---|
-| New feature | "实现" "添加功能" | code-gen → style-check → test | Serial |
-| Refactor | "重构" "优化代码" | code-understand → refactor → verify | Serial |
-| Testing | "测试" "测试用例" | test-gen → coverage-check | Serial |
-| Code review | "审查" "review" | analyze → report | Parallel |
-| Bug fix | "报错" "bug" | log-analyze → locate → fix | Serial |
-| Performance | "慢" "性能" | profile → bottleneck → optimize | Serial |
-| Build/deploy | "构建" "发布" "deploy" | build-check → version → deploy | Serial |
-| Config/CI/CD | "配置" "CI" "CD" | env-detect → config-gen → verify | Parallel |
-| Documentation | "文档" | code-understand → doc-gen → format-check | Serial |
-| Changelog | "更新日志" "changelog" | commit-collect → classify → format | Serial |
+> 技能选择按树形分层：先在 INDEX.md 中匹配 L1 类别，再加载对应 L2 技能。
+> 完整的调度映射表见 `.agents/skills/INDEX.md` 的导航指南和树形结构。
+
+当 L2 技能被选中后，本技能负责其编排策略：决定串行/并行、难度分级、执行顺序。
 
 ## Skill Selection Priority
 

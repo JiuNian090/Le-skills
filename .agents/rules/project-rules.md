@@ -99,8 +99,8 @@
 ### 第 0 步：加载规则文件
 
 - 本文件已由 AGENTS.md 指令加载（全量加载）
+- 技能树导航见 `.agents/skills/INDEX.md`（优先读取，了解技能层级关系）
 - 如需技能调度细则，加载 `.agents/rules/skill-scheduling-rules.md`
-
 ### 第一步：任务分类
 
 | 类别 | 判定标准 | 触发条件 |
@@ -111,15 +111,16 @@
 | 🧹 代码改进 | 重构、简化、去冗余、性能优化 | 用户说"优化""重构""清理" |
 | ✏️ 简单改动 | ≤10行、文案/配置/单文件样式微调 | 明显是微小改动 |
 
-### 第二步：调用对应的技能入口
+### 第二步：调用对应的技能入口（按技能树分派）
 
-| 类别 | 必须调用的技能 |
-|------|--------------|
-| 🎨 UI/设计 | `frontend-design` 或 `redesign-existing-projects` |
-| 🔧 Bug 修复 | `systematic-debugging` |
-| 🏗️ 新功能/复杂改动 | `brainstorming` 或 `writing-plans` |
-| 🧹 代码改进 | `codegraph-cli` 或 `gitnexus-cli` 影响分析 |
-| ✏️ 简单改动 | 直接执行 |
+> 完整技能树见 `.agents/skills/INDEX.md`。先匹配 L1 类别，再由 L2 技能执行。
 
+| 类别 | L1 树类别 | 分派说明 |
+|------|-----------|---------|
+| 🎨 UI/设计 | 🎨 设计技能（安装 le-skills-taste 后可用） | 调用 `frontend-design` 或 `redesign-existing-projects` |
+| 🔧 Bug 修复 | — | 不调用技能树，直接加载 `systematic-debugging` |
+| 🏗️ 新功能/复杂改动 | — | 不调用技能树，直接加载 `brainstorming` 或 `writing-plans` |
+| 🧹 代码改进 | 📋 任务调度 | 加载 `scheduling-project-skills` 进行编排 |
+| ✏️ 简单改动 | — | 直接执行，不调用技能
 > 如果任务跨多个类别，按最高优先级执行（UI/设计 > Bug修复 > 新功能 > 代码改进 > 简单改动）
 > 技能调用后，按技能返回的指导执行。不得以"跳过"或"太简单"为由绕过分类步骤。
