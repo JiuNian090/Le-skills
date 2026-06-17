@@ -951,6 +951,7 @@ ${cyan('Registry commands:')}
 ${cyan('Tool commands:')}
   npx psm tool list [target]            List tools & installation status
   npx psm tool install <name> [target]  Install a tool (CLI or MCP)
+  npx psm tool verify [target]          Verify installed tool commands work
   npx psm tool setup [target]           Scan skills & install missing tools
 
 ${cyan('Examples:')}
@@ -965,6 +966,7 @@ ${cyan('Examples:')}
   npx psm tool list                List tools and their status
   npx psm tool install codegraph   Install codegraph (CLI or MCP)
   npx psm tool setup               Auto-detect and install missing tools
+  npx psm tool verify               Verify installed tool commands
 `);
 }
 
@@ -1090,7 +1092,7 @@ function readToolRegistry() {
 
 /**
  * Read the tool index from a target project.
- * Returns a map of tool name → { installed, mode, version }.
+ * Returns a map of tool name → tool info.
  */
 function readToolIndex(target) {
   const indexPath = path.join(target || '.', '.agents', 'tools.json');
@@ -1104,6 +1106,8 @@ function readToolIndex(target) {
 
 /**
  * Write the tool index to a target project.
+ * Index shape per tool:
+ *   { installed, mode, version, path, commands: [{cmd, verified, lastOk}], verifiedAt }
  */
 function writeToolIndex(target, index) {
   const dir = path.join(target, '.agents');
@@ -1128,6 +1132,22 @@ function checkToolAvailable(name) {
 }
 
 /**
+ * Get the full path of a tool binary.
+ */
+function getToolPath(name) {
+  try {
+    const result = execSync(`${process.platform === 'win32' ? 'where' : 'which'} ${name}`, {
+      encoding: 'utf-8',
+      timeout: 3000,
+      stdio: ['ignore', 'pipe', 'pipe'],
+    });
+    return result.trim().split('\n')[0] || null;
+  } catch {
+    return null;
+  }
+}
+
+/**
  * Get the version of an installed tool.
  */
 function getToolVersion(name) {
@@ -1140,6 +1160,98 @@ function getToolVersion(name) {
     return result.trim().split('\n')[0];
   } catch {
     return 'unknown';
+  }
+}
+
+/**
+ * Test whether a specific subcommand works.
+ * Returns { ok, output }.
+ */
+function testSubcommand(cmd) {
+  try {
+    const result = execSync(`${cmd} --help`, {
+      encoding: 'utf-8',
+      timeout: 5000,
+      stdio: ['ignore', 'pipe', 'pipe'],
+    });
+    return { ok: true, output: result.trim().split('\n')[0] };
+  } catch (e) {
+    // Some tools don't have --help on every subcommand; try without args
+    try {
+      const result = execSync(`${cmd}`, {
+        encoding: 'utf-8',
+        timeout: 5000,
+        stdio: ['ignore', 'pipe', 'pipe'],
+      });
+      return { ok: true, output: result.trim().split('\n')[0] };
+    } catch {
+      return { ok: false, output: null };
+    }
+  }
+}
+
+/**
+ * Verify all subcommands for a tool and return the verified list.
+ */
+function verifyToolCommands(toolDef) {
+  if (!toolDef.commands || toolDef.commands.length === 0) return [];
+  console.log(dim(`  验证命令可用性...`));
+  return toolDef.commands.map(c => {
+    const { ok } = testSubcommand(c.cmd);
+    const status = ok ? green('✓') : yellow('⚠');
+    console.log(`    ${status} ${c.cmd} — ${c.description}${ok ? '' : dim(' (不可用)')}`);
+    return { cmd: c.cmd, description: c.description, verified: ok };
+  });
+}
+
+/**
+ * Find the IDE's MCP config path by detecting common IDEs.
+ */
+function getMcpConfigPath() {
+  const home = process.env.HOME || process.env.USERPROFILE || '';
+  const candidates = [
+    // Windows
+    { path: path.join(process.env.APPDATA || '', 'Code', 'User', 'globalStorage', 'rooveterinaryinc.roo-cli', 'mcp.json'), name: 'Roo Code' },
+    { path: path.join(home, '.cursor', 'mcp.json'), name: 'Cursor' },
+    { path: path.join(home, '.windsurf', 'mcp.json'), name: 'Windsurf' },
+    { path: path.join(home, '.codex', 'mcp.json'), name: 'Codex' },
+    { path: path.join(home, '.claude', 'mcp.json'), name: 'Claude Code' },
+  ];
+  for (const c of candidates) {
+    if (fs.existsSync(c.path)) return c;
+  }
+  return null;
+}
+
+/**
+ * Write MCP server config to the IDE's MCP config file.
+ */
+function writeMcpConfig(toolName, mcpConfig) {
+  const ide = getMcpConfigPath();
+  if (!ide) {
+    console.log(yellow(`  未检测到支持的 IDE。请手动配置 MCP。`));
+    return false;
+  }
+
+  try {
+    let config = { mcpServers: {} };
+    if (fs.existsSync(ide.path)) {
+      config = JSON.parse(fs.readFileSync(ide.path, 'utf-8'));
+      if (!config.mcpServers) config.mcpServers = {};
+    }
+
+    // Add or update the tool's MCP config
+    config.mcpServers[toolName] = {
+      command: mcpConfig.command,
+      args: mcpConfig.args || [],
+    };
+
+    fs.writeFileSync(ide.path, JSON.stringify(config, null, 2), 'utf-8');
+    console.log(green(`  → MCP 配置已写入 ${ide.path}`));
+    return true;
+  } catch (e) {
+    console.log(yellow(`  ⚠ 写入 MCP 配置失败: ${e.message}`));
+    return false;
   }
 }
 
@@ -1161,9 +1273,16 @@ async function cmdToolInstall(toolName, targetDir) {
   // Check if already installed
   if (checkToolAvailable(toolName)) {
     const ver = getToolVersion(toolName);
+    const toolPath = getToolPath(toolName);
     console.log(green(`${toolName} 已安装 (${ver})`));
+    console.log(dim(`  路径: ${toolPath}`));
+    // Re-verify commands
+    const cmds = verifyToolCommands(tool);
     const index = readToolIndex(target);
-    index[toolName] = { installed: true, mode: 'cli', version: ver, updatedAt: new Date().toISOString() };
+    index[toolName] = {
+      installed: true, mode: 'cli', version: ver,
+      path: toolPath, commands: cmds, verifiedAt: new Date().toISOString()
+    };
     writeToolIndex(target, index);
     return;
   }
@@ -1207,13 +1326,19 @@ async function cmdToolInstall(toolName, targetDir) {
       }
     }
 
-    // Verify
+    // Verify: check path + each subcommand
     if (checkToolAvailable(toolName)) {
       const ver = getToolVersion(toolName);
+      const toolPath = getToolPath(toolName);
       console.log(green(`\n${tool.name} CLI 安装成功 (${ver})`));
+      const cmds = verifyToolCommands(tool);
       const index = readToolIndex(target);
-      index[toolName] = { installed: true, mode: 'cli', version: ver, updatedAt: new Date().toISOString() };
+      index[toolName] = {
+        installed: true, mode: 'cli', version: ver,
+        path: toolPath, commands: cmds, verifiedAt: new Date().toISOString()
+      };
       writeToolIndex(target, index);
+      console.log(green(`  命令索引已写入 .agents/tools.json`));
     } else {
       console.log(yellow(`\n⚠ ${tool.name} 安装可能未完成，请检查后重试。`));
     }
@@ -1230,20 +1355,32 @@ async function cmdToolInstall(toolName, targetDir) {
       }
     }
 
-    // If there's a direct MCP config, show it
+    // Write MCP config to IDE
+    let mcpWritten = false;
     if (tool.mcp.config) {
-      console.log(`\n${cyan('MCP 配置方式:')}`);
-      console.log(`  ${JSON.stringify(tool.mcp.config, null, 2)}`);
-      console.log(`\n${dim('请将以上配置添加到你的 IDE 的 MCP 配置文件中。')}`);
-      console.log(dim('Cursor: ~/.cursor/mcp.json'));
-      console.log(dim('Windsurf: ~/.windsurf/mcp.json'));
-      console.log(dim('Claude Code: claude mcp add'));
+      console.log(`\n${cyan('写入 MCP 配置...')}`);
+      mcpWritten = writeMcpConfig(toolName, tool.mcp.config);
+
+      if (!mcpWritten) {
+        console.log(`\n${cyan('手动 MCP 配置:')}`);
+        console.log(`  ${JSON.stringify(tool.mcp.config, null, 2)}`);
+        console.log(`\n${dim('请将以上配置添加到你的 IDE 的 MCP 配置文件中。')}`);
+        console.log(dim('Cursor: ~/.cursor/mcp.json'));
+        console.log(dim('Windsurf: ~/.windsurf/mcp.json'));
+        console.log(dim('Claude Code: claude mcp add'));
+      }
     }
 
     const index = readToolIndex(target);
-    index[toolName] = { installed: true, mode: 'mcp', updatedAt: new Date().toISOString() };
+    index[toolName] = {
+      installed: true, mode: 'mcp',
+      mcpConfig: tool.mcp.config || null,
+      mcpWrittenTo: mcpWritten ? getMcpConfigPath()?.path : null,
+      commands: (tool.commands || []).map(c => ({ cmd: c.cmd, description: c.description, verified: false })),
+      updatedAt: new Date().toISOString()
+    };
     writeToolIndex(target, index);
-    console.log(green(`\n${tool.name} MCP 配置已记录`));
+    console.log(green(`\n${tool.name} MCP 配置已记录到 .agents/tools.json`));
   }
 }
 
@@ -1263,13 +1400,38 @@ function cmdToolList(targetDir) {
   for (const t of tools) {
     const available = checkToolAvailable(t.name);
     const recorded = index[t.name];
-    const status = available ? green('✓ 已安装') : recorded ? yellow(`已记录 (${recorded.mode})`) : dim('未安装');
+
+    // Status icon
+    let status;
+    if (available) {
+      const cmdsOk = recorded?.commands?.every(c => c.verified === false) === false;
+      status = cmdsOk ? green('✓ 已安装 (命令可用)') : green('✓ 已安装');
+    } else if (recorded) {
+      status = yellow(`已记录 (${recorded.mode})`);
+    } else {
+      status = dim('未安装');
+    }
+
     const ver = available ? ` (${getToolVersion(t.name)})` : '';
     console.log(`  ${cyan(t.name)} ${status}${ver}`);
-    console.log(`      ${t.description}`);
+
     if (available || recorded) {
       const mode = recorded?.mode || 'cli';
-      console.log(`      方式: ${mode}`);
+      const toolPath = recorded?.path || (available ? getToolPath(t.name) : '—');
+      console.log(`      方式: ${mode}  路径: ${toolPath}`);
+    }
+
+    // Show recorded commands
+    if (recorded?.commands?.length) {
+      for (const c of recorded.commands) {
+        const ok = c.verified ? green('✓') : dim('?');
+        console.log(`      ${ok} ${c.cmd} — ${c.description || ''}`);
+      }
+    } else if (t.commands?.length) {
+      // Show default commands from registry (not yet verified)
+      for (const c of t.commands) {
+        console.log(`      ${dim('·')} ${c.cmd} — ${c.description}`);
+      }
     }
     console.log();
   }
@@ -1303,7 +1465,6 @@ async function cmdToolSetup(targetDir) {
       const skillMd = path.join(skillsDir, entry.name, 'SKILL.md');
       if (!fs.existsSync(skillMd)) continue;
       const content = fs.readFileSync(skillMd, 'utf-8');
-      // Parse requires_tools from YAML frontmatter
       const match = content.match(/^requires_tools:\s*$/m);
       if (match) {
         const lines = content.slice(match.index).split('\n');
@@ -1343,6 +1504,53 @@ async function cmdToolSetup(targetDir) {
       }
     }
   }
+}
+
+// ---- cmd: tool verify ----
+
+function cmdToolVerify(targetDir) {
+  const target = path.resolve(targetDir || process.cwd());
+  const tools = readToolRegistry();
+  const index = readToolIndex(target);
+
+  if (tools.length === 0) {
+    console.log(yellow('注册中心中未定义工具。'));
+    return;
+  }
+
+  console.log(`\n${green('验证工具命令可用性')}\n`);
+  let allOk = true;
+
+  for (const t of tools) {
+    const available = checkToolAvailable(t.name);
+    if (!available) {
+      console.log(`  ${yellow(t.name)}  ${dim('未安装，跳过验证')}`);
+      continue;
+    }
+
+    const ver = getToolVersion(t.name);
+    const toolPath = getToolPath(t.name);
+    console.log(`  ${cyan(t.name)} ${dim(`(${ver})`)}`);
+    console.log(`    路径: ${toolPath}`);
+
+    if (t.commands && t.commands.length > 0) {
+      const verified = verifyToolCommands(t);
+      // Update index
+      index[t.name] = {
+        ...(index[t.name] || {}),
+        installed: true, mode: index[t.name]?.mode || 'cli',
+        version: ver, path: toolPath,
+        commands: verified, verifiedAt: new Date().toISOString()
+      };
+      const hasFailures = verified.some(c => !c.verified);
+      if (hasFailures) allOk = false;
+    } else {
+      console.log(`    ${dim('无可验证的子命令')}`);
+    }
+  }
+
+  writeToolIndex(target, index);
+  console.log(allOk ? green('\n✓ 所有工具命令可用') : yellow('\n⚠ 部分子命令不可用，请检查工具安装'));
 }
 
 function cmdList() {
@@ -1763,8 +1971,10 @@ function main() {
         cmdToolList(args[2]);
       } else if (sub === 'setup') {
         cmdToolSetup(args[2]);
+      } else if (sub === 'verify') {
+        cmdToolVerify(args[2]);
       } else {
-        die(`未知 tool 子命令: ${sub}。可用: install, list, setup`);
+        die(`未知 tool 子命令: ${sub}。可用: install, list, setup, verify`);
       }
       break;
     }

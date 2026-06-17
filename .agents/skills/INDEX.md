@@ -135,13 +135,16 @@ L0: managing-project-skills（根节点 — 用户入口）
 
 | 工具 | 用途 | CLI 安装 | MCP 配置 | 状态索引 |
 |------|------|---------|---------|---------|
-| **codegraph** | 符号搜索、调用图、影响分析 | `curl ... install.sh \| sh` | `codegraph install` 自动配置 | `.agents/tools.json` |
-| **gitnexus** | Git blame、日志分析、变更影响 | `npm install -g gitnexus` | `npx gitnexus@latest mcp` | `.agents/tools.json` |
+| **codegraph** | 符号搜索、调用图、影响分析 | `curl ... install.sh \| sh` | `codegraph install` 自动配置 IDE | `.agents/tools.json` |
+| **gitnexus** | Git blame、日志分析、变更影响 | `npm install -g gitnexus` | 自动写入 `.mcp.json` | `.agents/tools.json` |
 
 **命令：**
-- `npx psm tool list` — 查看所有工具安装状态
+- `npx psm tool list` — 查看所有工具安装状态、路径、已验证的子命令
 - `npx psm tool install <name>` — 交互式安装（选 CLI 还是 MCP）
 - `npx psm tool setup` — 扫描已安装技能，批量安装缺失工具
+- `npx psm tool verify` — 重新验证已安装工具的所有子命令可用性
+
+**调用方式：** 技能通过读取 `.agents/tools.json` 获取工具的安装路径和可用命令。例如 `codegraph query` 在 tools.json 中记录为 `verified: true`，技能可直接调用。MCP 方式则通过 IDE 的 MCP 服务器配置调用，无需手动管理命令路径。
 
 ---
 

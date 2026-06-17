@@ -1,0 +1,70 @@
+{
+  "codegraph": {
+    "installed": true,
+    "mode": "cli",
+    "version": "1.0.1",
+    "path": "D:\\nodejs\\node_global\\codegraph\r",
+    "commands": [
+      {
+        "cmd": "codegraph query",
+        "description": "查询代码符号和关系",
+        "verified": true
+      },
+      {
+        "cmd": "codegraph explore",
+        "description": "交互式浏览代码图谱",
+        "verified": true
+      },
+      {
+        "cmd": "codegraph index",
+        "description": "索引当前项目的代码图谱",
+        "verified": true
+      },
+      {
+        "cmd": "codegraph sync",
+        "description": "同步代码变更到图谱",
+        "verified": true
+      },
+      {
+        "cmd": "codegraph install",
+        "description": "安装/配置 MCP 服务器",
+        "verified": true
+      }
+    ],
+    "verifiedAt": "2026-06-17T19:36:14.315Z"
+  },
+  "gitnexus": {
+    "installed": true,
+    "mode": "cli",
+    "version": "1.6.5",
+    "path": "D:\\nodejs\\node_global\\gitnexus\r",
+    "commands": [
+      {
+        "cmd": "gitnexus analyze",
+        "description": "分析仓库并生成代码知识图谱",
+        "verified": true
+      },
+      {
+        "cmd": "gitnexus blame",
+        "description": "追查代码行变更历史",
+        "verified": true
+      },
+      {
+        "cmd": "gitnexus log",
+        "description": "查看 Git 提交日志",
+        "verified": true
+      },
+      {
+        "cmd": "gitnexus diff",
+        "description": "显示变更差异",
+        "verified": true
+      },
+      {
+        "cmd": "gitnexus setup",
+        "description": "配置 IDE MCP 集成",
+        "verified": true
+      }
+    ],
+    "verifiedAt": "2026-06-17T19:36:15.974Z"
+  }
+}

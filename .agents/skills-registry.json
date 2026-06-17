@@ -116,6 +116,13 @@
         "description": "代码图谱：符号搜索、调用图、影响分析",
         "homepage": "https://github.com/colbymchenry/codegraph",
         "checkCommand": "codegraph --version 2>/dev/null || echo 'not-found'",
+        "commands": [
+          { "cmd": "codegraph query", "description": "查询代码符号和关系" },
+          { "cmd": "codegraph explore", "description": "交互式浏览代码图谱" },
+          { "cmd": "codegraph index", "description": "索引当前项目的代码图谱" },
+          { "cmd": "codegraph sync", "description": "同步代码变更到图谱" },
+          { "cmd": "codegraph install", "description": "安装/配置 MCP 服务器" }
+        ],
         "cli": {
           "description": "安装脚本（推荐，无需 Node.js）或 npm 全局安装",
           "commands": [
@@ -136,6 +143,13 @@
         "description": "Git 代码智能：blame、日志分析、变更影响",
         "homepage": "https://github.com/abhigyanpatwari/GitNexus",
         "checkCommand": "gitnexus --version 2>/dev/null || echo 'not-found'",
+        "commands": [
+          { "cmd": "gitnexus analyze", "description": "分析仓库并生成代码知识图谱" },
+          { "cmd": "gitnexus blame", "description": "追查代码行变更历史" },
+          { "cmd": "gitnexus log", "description": "查看 Git 提交日志" },
+          { "cmd": "gitnexus diff", "description": "显示变更差异" },
+          { "cmd": "gitnexus setup", "description": "配置 IDE MCP 集成" }
+        ],
         "cli": {
           "description": "npm 全局安装",
           "commands": [
