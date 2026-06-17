@@ -1,15 +1,15 @@
 #!/usr/bin/env node
 // ============================================================
-// le-skills — Project skills & rules CLI
+// psm — Project Skills Manager CLI
 // ============================================================
-//   npx le-skills install [-y] [--preview] [target]
-//   npx le-skills check   [target]
-//   npx le-skills info    [target]
-//   npx le-skills list
-//   npx le-skills outdated
-//   npx le-skills update
-//   npx le-skills version
-//   npx le-skills --help
+//   npx psm install [-y] [--preview] [target]
+//   npx psm check   [target]
+//   npx psm info    [target]
+//   npx psm list
+//   npx psm outdated
+//   npx psm update
+//   npx psm version
+//   npx psm --help
 // ============================================================
 
 import fs from 'node:fs';
@@ -67,7 +67,7 @@ function backupPath(target, relPath) {
   if (!fs.existsSync(source)) return null;
 
   const ts = Date.now();
-  const backupDir = path.join(target, '.agents', '.le-skills-backup', String(ts));
+  const backupDir = path.join(target, '.agents', '.psm-backup', String(ts));
   const dest = path.join(backupDir, relPath);
   fs.mkdirSync(path.dirname(dest), { recursive: true });
 
@@ -125,7 +125,7 @@ async function safeCopyFile(src, dest, label, autoYes = false) {
   const choice = await askChoice(
     '如何处理此文件？',
     [
-      '替换为 le-skills 版本（原文件备份到 .agents/.le-skills-backup/）',
+      '替换为 psm 版本（原文件备份到 .agents/.psm-backup/）',
       '保留现有文件，不替换',
       '显示差异（查看后再选）',
     ],
@@ -139,7 +139,7 @@ async function safeCopyFile(src, dest, label, autoYes = false) {
     // Show diff
     const srcLines = srcContent.split('\n');
     const dstLines = dstContent.split('\n');
-    console.log(`\n${dim('--- le-skills version (new)')}`);
+    console.log(`\n${dim('--- psm version (new)')}`);
     console.log(`${dim('+++ current file (existing)')}`);
     const max = Math.max(srcLines.length, dstLines.length);
     for (let i = 0; i < max; i++) {
@@ -192,7 +192,7 @@ function isInstalled(target) {
 
 function getLatestVersion() {
   try {
-    const out = execSync('npm view le-skills version', {
+    const out = execSync('npm view psm version', {
       encoding: 'utf-8',
       timeout: 5000,
       stdio: ['ignore', 'pipe', 'pipe'],
@@ -360,7 +360,7 @@ function scanCodeStandards(content) {
 }
 
 /**
- * Check if AGENTS.md already has le-skills loading chain injected.
+ * Check if AGENTS.md already has psm loading chain injected.
  */
 function hasLoadingChain(content) {
   return /每次任务开始前必须加载以下规则文件/.test(content);
@@ -406,7 +406,7 @@ function generateIndexMd(target) {
   const l1Keys = Object.keys(treeMap);
   let md = "# 技能树 INDEX" + NL + NL;
   md += "> 🎯**任何 AI Agent / AI IDE 的统一导航入口** — 安装后优先读取此文件了解技能结构" + NL;
-  md += "> 由 le-skills install 自动生成 — 运行 " + BK + "npx le-skills install --yes" + BK + " 重新生成" + NL + NL;
+  md += "> 由 psm install 自动生成 — 运行 " + BK + "npx psm install --yes" + BK + " 重新生成" + NL + NL;
   md += "---" + NL + NL;
   md += "## 🌳 技能树总览" + NL + NL + BK + BK + BK + NL;
   md += "L0: managing-project-skills（根节点 — 用户入口）" + NL + "  │" + NL;
@@ -449,14 +449,14 @@ function generateIndexMd(target) {
   md += "| 技能执行时编排任务 | 读取 skill-scheduling-rules.md 决定调度策略 | 按需加载 |" + NL;
   md += "| 用户说「更新更新日志为 vx.x.x」 | 读取 changelog-rules.md 生成更新日志 | 按需加载 |" + NL;
   md += "| 未匹配以上条件 | 仅使用 project-rules.md（已全量加载） | 全量加载 |" + NL + NL;
-  md += "> **注意：** 本 INDEX.md 由 le-skills 维护。任何 AI IDE 均可通过读取此文件理解技能树结构。" + NL;
+  md += "> **注意：** 本 INDEX.md 由 psm 维护。任何 AI IDE 均可通过读取此文件理解技能树结构。" + NL;
   return md;
 }
 
 // ---- Rule Extraction (AGENTS.md + CLAUDE.md) ----
 
 /**
- * Load le-skills default rule content for comparison.
+ * Load psm default rule content for comparison.
  */
 function getDefaultRuleContent(sectionType) {
   const ruleFile = sectionType === 'version' ? 'version-management-rules.md' : 'code-standards-rules.md';
@@ -466,7 +466,7 @@ function getDefaultRuleContent(sectionType) {
 }
 
 /**
- * Check if user content overlaps with le-skills default rules.
+ * Check if user content overlaps with psm default rules.
  * Returns a similarity score 0-1 based on keyword overlap.
  */
 function calcRuleOverlap(userContent, defaultContent) {
@@ -536,7 +536,7 @@ function scanFileForSections(filePath, sectionType) {
 
 /**
  * Extract rule sections from AGENTS.md AND CLAUDE.md — ONE SECTION AT A TIME,
- * with similarity comparison against le-skills defaults.
+ * with similarity comparison against psm defaults.
  * Returns array of extracted section contents.
  */
 async function extractSectionsInteractive(target, sectionType, autoYes = false) {
@@ -553,7 +553,7 @@ async function extractSectionsInteractive(target, sectionType, autoYes = false) 
 
   if (allSections.length === 0) return [];
 
-  // Load le-skills default for comparison
+  // Load psm default for comparison
   const defaultContent = getDefaultRuleContent(sectionType);
 
   if (autoYes) {
@@ -572,7 +572,7 @@ async function extractSectionsInteractive(target, sectionType, autoYes = false) 
   }
 
   // Backup both files
-  const backupDir = path.join(target, '.agents', '.le-skills-backup');
+  const backupDir = path.join(target, '.agents', '.psm-backup');
   if (!fs.existsSync(backupDir)) {
     fs.mkdirSync(backupDir, { recursive: true });
   }
@@ -596,12 +596,12 @@ async function extractSectionsInteractive(target, sectionType, autoYes = false) 
     console.log(`  ${dim(section.header)}`);
     console.log(`  ${dim(section.content.slice(0, 250))}${section.content.length > 250 ? '…' : ''}`);
 
-    // Compare with le-skills default
+    // Compare with psm default
     let overlap = 0;
     if (defaultContent) {
       overlap = calcRuleOverlap(section.content, defaultContent);
       if (overlap > 0.3) {
-        console.log(`  ${yellow('⚠ 此规则与 le-skills 默认规则相似度较高')} (${Math.round(overlap * 100)}%)`);
+        console.log(`  ${yellow('⚠ 此规则与 psm 默认规则相似度较高')} (${Math.round(overlap * 100)}%)`);
       }
     }
 
@@ -611,14 +611,14 @@ async function extractSectionsInteractive(target, sectionType, autoYes = false) 
       `保留在 ${section.sourceFile} 原处，不提取`,
     ];
     if (overlap > 0.3) {
-      options.push(`使用 le-skills 默认规则替换（丢弃此段）`);
+      options.push(`使用 psm 默认规则替换（丢弃此段）`);
     } else {
       options.push(`同时保留两处（拷贝到规则文件 + 保留 ${section.sourceFile} 原内容）`);
     }
 
     const choice = await askChoice(
       overlap > 0.3
-        ? `此规则与 le-skills 默认规则 ${Math.round(overlap * 100)}% 相似，如何处理？`
+        ? `此规则与 psm 默认规则 ${Math.round(overlap * 100)}% 相似，如何处理？`
         : `如何处理此${typeLabel}规则段落？`,
       options,
     );
@@ -639,8 +639,8 @@ async function extractSectionsInteractive(target, sectionType, autoYes = false) 
     } else if (choice === 1) {
       console.log(cyan(`  → 保留在原处`));
     } else if (choice === 2 && overlap > 0.3) {
-      // Use le-skills default instead — don't extract user version
-      console.log(cyan(`  → 使用 le-skills 默认规则，丢弃此段`));
+      // Use psm default instead — don't extract user version
+      console.log(cyan(`  → 使用 psm 默认规则，丢弃此段`));
     } else {
       // Keep both
       extracted.push(section.content);
@@ -673,7 +673,7 @@ async function confirmInjectLoadingChain(target, autoYes = false) {
 
   if (!autoYes) {
     console.log(`\n${yellow('═══ AGENTS.md 注入 ═══')}`);
-    console.log('需要在 AGENTS.md 末尾添加 le-skills 规则加载链，确保 AI Agent 自动加载规则文件。');
+    console.log('需要在 AGENTS.md 末尾添加 psm 规则加载链，确保 AI Agent 自动加载规则文件。');
     const ok = await askYesNo('是否注入规则加载链？', true);
     if (!ok) {
       console.log(cyan('  → 跳过'));
@@ -681,13 +681,13 @@ async function confirmInjectLoadingChain(target, autoYes = false) {
     }
   }
 
-  const backupPath = path.join(target, '.agents', '.le-skills-backup');
+  const backupPath = path.join(target, '.agents', '.psm-backup');
   if (!fs.existsSync(backupPath)) {
     fs.mkdirSync(backupPath, { recursive: true });
   }
   fs.copyFileSync(agentsPath, path.join(backupPath, 'AGENTS.md'));
 
-  const injection = `\n---\n\n## le-skills 规则加载链\n\n> 本段由 le-skills install 自动注入\n\n**每次任务开始前必须加载以下规则文件：**\n- \`.agents/rules/project-rules.md\` — 全量加载，含任务分类铁律和技能入口映射\n- \`.agents/rules/skill-scheduling-rules.md\` — 按需加载，含难度判断/场景流程/开发工作流\n- \`.agents/rules/code-standards-rules.md\` — 按需加载，修改代码时应用\n- \`.agents/rules/version-management-rules.md\` — 按需加载，版本发布/CHANGELOG 时应用\n\n`;
+  const injection = `\n---\n\n## psm 规则加载链\n\n> 本段由 psm install 自动注入\n\n**每次任务开始前必须加载以下规则文件：**\n- \`.agents/rules/project-rules.md\` — 全量加载，含任务分类铁律和技能入口映射\n- \`.agents/rules/skill-scheduling-rules.md\` — 按需加载，含难度判断/场景流程/开发工作流\n- \`.agents/rules/code-standards-rules.md\` — 按需加载，修改代码时应用\n- \`.agents/rules/version-management-rules.md\` — 按需加载，版本发布/CHANGELOG 时应用\n\n`;
   content += injection;
   fs.writeFileSync(agentsPath, content, 'utf-8');
   return true;
@@ -712,7 +712,7 @@ async function confirmInjectClaudeRef(target, autoYes = false) {
     }
   }
 
-  const backupPath = path.join(target, '.agents', '.le-skills-backup');
+  const backupPath = path.join(target, '.agents', '.psm-backup');
   if (!fs.existsSync(backupPath)) {
     fs.mkdirSync(backupPath, { recursive: true });
   }
@@ -779,7 +779,7 @@ function showInstallPlan(target, plan) {
   const hasIssues = plan.versionConflict || plan.standardsConflict || plan.hasOtherSkills;
 
   console.log(`\n${cyan('═══════════════════════════════════════')}`);
-  console.log(`${cyan('  le-skills Install Plan')}`);
+  console.log(`${cyan('  psm Install Plan')}`);
   console.log(`${cyan('═══════════════════════════════════════')}`);
   console.log(`\n  ${cyan('Target:')}  ${target}`);
   console.log(`  ${cyan('Type:')}    ${plan.projectType}`);
@@ -851,34 +851,34 @@ function showInstallPlan(target, plan) {
 
 function cmdHelp() {
   console.log(`\
-${green('le-skills v' + VERSION)}
+${green('psm v' + VERSION)}
 
 ${cyan('Usage:')}
-  npx le-skills install [-y] [--preview] [target]
-  npx le-skills check        [target]
-  npx le-skills info         [target]
-  npx le-skills list
-  npx le-skills outdated
-  npx le-skills update
-  npx le-skills version / -v
-  npx le-skills help / -h
+  npx psm install [-y] [--preview] [target]
+  npx psm check        [target]
+  npx psm info         [target]
+  npx psm list
+  npx psm outdated
+  npx psm update
+  npx psm version / -v
+  npx psm help / -h
 
 ${cyan('Install options:')}
   -y, --yes          Skip prompts, overwrite existing
   --preview          Show install plan only, do not install
 
 ${cyan('Examples:')}
-  npx le-skills install                  Install into current directory
-  npx le-skills install ../my-app        Install into ../my-app
-  npx le-skills install --preview        Preview install plan
-  npx le-skills install -y               Quiet install, overwrite existing
-  npx le-skills check                    Check current directory
-  npx le-skills info                     Show version + env + status
+  npx psm install                  Install into current directory
+  npx psm install ../my-app        Install into ../my-app
+  npx psm install --preview        Preview install plan
+  npx psm install -y               Quiet install, overwrite existing
+  npx psm check                    Check current directory
+  npx psm info                     Show version + env + status
 `);
 }
 
 function cmdVersion() {
-  console.log(`le-skills v${VERSION}`);
+  console.log(`psm v${VERSION}`);
 }
 
 // ---- list ----
@@ -992,7 +992,7 @@ async function cmdInstall(targetDir, opts = {}) {
         const action = await askChoice(
           `如何处理 ${d.path}？`,
           [
-            '保持不动，le-skills 不管理此目录',
+            '保持不动，psm 不管理此目录',
             '迁移到 .agents/skills/（保留原目录）',
             '迁移到 .agents/skills/（迁移后删除原目录）',
           ],
@@ -1026,7 +1026,7 @@ async function cmdInstall(targetDir, opts = {}) {
     const vrmPath = path.join(target, '.agents', 'rules', 'version-management-rules.md');
     if (fs.existsSync(vrmPath)) {
       let vrmContent = fs.readFileSync(vrmPath, 'utf-8');
-      const marker = '<!-- le-skills:project-custom -->';
+      const marker = '<!-- psm:project-custom -->';
       const markerIdx = vrmContent.indexOf(marker);
       if (markerIdx !== -1) {
         const before = vrmContent.slice(0, markerIdx + marker.length);
@@ -1042,7 +1042,7 @@ async function cmdInstall(targetDir, opts = {}) {
     const csPath = path.join(target, '.agents', 'rules', 'code-standards-rules.md');
     if (fs.existsSync(csPath)) {
       let csContent = fs.readFileSync(csPath, 'utf-8');
-      const marker = '<!-- le-skills:project-custom -->';
+      const marker = '<!-- psm:project-custom -->';
       const markerIdx = csContent.indexOf(marker);
       if (markerIdx !== -1) {
         const before = csContent.slice(0, markerIdx + marker.length);
@@ -1066,7 +1066,7 @@ async function cmdInstall(targetDir, opts = {}) {
     console.log();
     const proceed = await askYesNo('确认完成安装？', true);
     if (!proceed) {
-      console.log(yellow('Installation cancelled. Backup files are in .agents/.le-skills-backup/'));
+      console.log(yellow('Installation cancelled. Backup files are in .agents/.psm-backup/'));
       return;
     }
   }
@@ -1134,7 +1134,7 @@ function cmdCheck(targetDir) {
 function cmdInfo(targetDir) {
   const target = path.resolve(targetDir || process.cwd());
 
-  console.log(`\n${green('le-skills — Package Info')}\n`);
+  console.log(`\n${green('psm — Package Info')}\n`);
   console.log(`  Version        ${VERSION}`);
   console.log(`  Package dir    ${PKG_DIR}`);
   console.log(`  Node.js        ${process.version}`);
@@ -1193,11 +1193,11 @@ function cmdOutdated() {
   }
 
   if (latest === VERSION) {
-    console.log(green(`le-skills v${VERSION} is up to date.`));
+    console.log(green(`psm v${VERSION} is up to date.`));
     process.exit(EXIT.OK);
   } else {
-    console.log(yellow(`le-skills v${VERSION} installed, v${latest} available.`));
-    console.log(cyan('  Run « npx le-skills update » to upgrade.'));
+    console.log(yellow(`psm v${VERSION} installed, v${latest} available.`));
+    console.log(cyan('  Run « npx psm update » to upgrade.'));
     process.exit(EXIT.ERR_OUTDATED);
   }
 }
@@ -1211,18 +1211,18 @@ function cmdUpdate() {
   }
 
   if (latest === VERSION) {
-    console.log(green(`le-skills v${VERSION} is already the latest version.`));
+    console.log(green(`psm v${VERSION} is already the latest version.`));
     return;
   }
 
-  console.log(cyan(`Updating le-skills: v${VERSION} → v${latest} …`));
+  console.log(cyan(`Updating psm: v${VERSION} → v${latest} …`));
   try {
-    execSync(`npm install -g le-skills@latest`, {
+    execSync(`npm install -g psm@latest`, {
       stdio: 'inherit',
     });
     console.log(green(`Updated to v${latest}.`));
   } catch {
-    die('Update failed. Try: npm install -g le-skills@latest');
+    die('Update failed. Try: npm install -g psm@latest');
   }
 }
 

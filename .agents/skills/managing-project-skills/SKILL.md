@@ -29,7 +29,7 @@ Look for these patterns in AGENTS.md/CLAUDE.md:
 | 代码规范 | 代码规范、编码规范、提交规范、code style、commit convention | `.agents/rules/code-standards-rules.md` |
 
 If patterns found but rule files missing, warn the user:
-> "检测到 AGENTS.md/CLAUDE.md 中包含版本管理/代码规范规则，但未提取到 `.agents/rules/`。建议运行 `npx le-skills install --yes` 来自动提取。"
+> "检测到 AGENTS.md/CLAUDE.md 中包含版本管理/代码规范规则，但未提取到 `.agents/rules/`。建议运行 `npx psm install --yes` 来自动提取。"
 
 ### 3. Bootstrap hint
 If INDEX.md missing, print:

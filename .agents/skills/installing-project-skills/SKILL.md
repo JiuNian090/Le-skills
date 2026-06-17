@@ -33,7 +33,7 @@ Search `**/SKILL.md` and `**/skill.md` across the project. Target dirs: `.agents
 
 ### 2.5. Scan & Extract Existing Rules from AGENTS.md / CLAUDE.md
 
-**Why:** Projects often have version management and code standards rules embedded in AGENTS.md or CLAUDE.md. These should be extracted to `.agents/rules/` so they become discoverable by le-skills and don't duplicate across files.
+**Why:** Projects often have version management and code standards rules embedded in AGENTS.md or CLAUDE.md. These should be extracted to `.agents/rules/` so they become discoverable by psm and don't duplicate across files.
 
 **Detection:** Scan AGENTS.md and CLAUDE.md for these patterns:
 
@@ -52,7 +52,7 @@ Search `**/SKILL.md` and `**/skill.md` across the project. Target dirs: `.agents
 **Loading chain:** Ensure AGENTS.md has the mandatory rule-loading instruction. If not, inject:
 ```markdown
 ---
-## le-skills 规则加载链
+## psm 规则加载链
 
 **每次任务开始前必须加载以下规则文件：**
 - `.agents/rules/project-rules.md` — 全量加载
@@ -61,7 +61,7 @@ Search `**/SKILL.md` and `**/skill.md` across the project. Target dirs: `.agents
 - `.agents/rules/version-management-rules.md` — 按需加载
 ```
 
-**CLAUDE.md:** If CLAUDE.md exists and doesn't have `@AGENTS.md`, prepend it. This is automatically handled by `npx le-skills install`.
+**CLAUDE.md:** If CLAUDE.md exists and doesn't have `@AGENTS.md`, prepend it. This is automatically handled by `npx psm install`.
 
 ### 3. Integrate Upstream Repos
 

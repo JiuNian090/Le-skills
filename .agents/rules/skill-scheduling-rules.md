@@ -1,5 +1,5 @@
-<!-- le-skills:auto-generated version=1.0 -->
-<!-- 本文件由 le-skills install 生成 -->
+<!-- psm:auto-generated version=1.0 -->
+<!-- 本文件由 psm install 生成 -->
 
 # 技能调度规则
 

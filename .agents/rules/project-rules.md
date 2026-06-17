@@ -1,5 +1,5 @@
-<!-- le-skills:auto-generated version=1.0 -->
-<!-- 本文件由 le-skills install 生成，非模板部分不会被覆盖 -->
+<!-- psm:auto-generated version=1.0 -->
+<!-- 本文件由 psm install 生成，非模板部分不会被覆盖 -->
 
 # 项目通用规则
 
@@ -67,9 +67,9 @@
 
 ## 🔧 代码规范（项目专属）
 
-> 触发条件：修改源代码时自动应用。以下为 le-skills 默认规范，安装时检测到项目已有规范则会询问是否替换。
+> 触发条件：修改源代码时自动应用。以下为 psm 默认规范，安装时检测到项目已有规范则会询问是否替换。
 
-<!-- le-skills:code-standards-placeholder -->
+<!-- psm:code-standards-placeholder -->
 <!-- 安装时如检测到同名规则，注入引用到此处 -->
 
 - 遵循项目已有代码风格（由 linters/formatters 强制执行）
@@ -85,7 +85,7 @@
 > 触发条件：用户说「更新更新日志为 vx.x.x」「发布新版本」「打 tag」时加载
 > 关联技能：`generating-changelogs`
 
-<!-- le-skills:version-management-placeholder -->
+<!-- psm:version-management-placeholder -->
 <!-- 安装时如检测到 AGENTS.md/CLAUDE.md 中有版本管理/CHANGELOG 规则，提取到此文件 -->
 
 版本管理详细流程见 `.agents/rules/version-management-rules.md`（按需加载）
@@ -117,7 +117,7 @@
 
 | 类别 | L1 树类别 | 分派说明 |
 |------|-----------|---------|
-| 🎨 UI/设计 | 🎨 设计技能（安装 le-skills-taste 后可用） | 调用 `frontend-design` 或 `redesign-existing-projects` |
+| 🎨 UI/设计 | 🎨 设计技能（安装 psm-taste 后可用） | 调用 `frontend-design` 或 `redesign-existing-projects` |
 | 🔧 Bug 修复 | — | 不调用技能树，直接加载 `systematic-debugging` |
 | 🏗️ 新功能/复杂改动 | — | 不调用技能树，直接加载 `brainstorming` 或 `writing-plans` |
 | 🧹 代码改进 | 📋 任务调度 | 加载 `scheduling-project-skills` 进行编排 |

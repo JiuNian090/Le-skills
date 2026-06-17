@@ -1,5 +1,5 @@
-<!-- le-skills:auto-generated version=1.0 -->
-<!-- 本文件由 le-skills install 生成。安装时检测到 AGENTS.md/CLAUDE.md 有代码规范规则，会提取到此文件 -->
+<!-- psm:auto-generated version=1.0 -->
+<!-- 本文件由 psm install 生成。安装时检测到 AGENTS.md/CLAUDE.md 有代码规范规则，会提取到此文件 -->
 
 # 代码规范规则
 
@@ -57,7 +57,7 @@
 
 ## ⚠️ 冲突处理
 
-> 以下场景由 le-skills install 检测并交互处理
+> 以下场景由 psm install 检测并交互处理
 
 | 检测到的冲突 | 处理方式 |
 |------------|---------|
@@ -70,5 +70,5 @@
 
 ## 📝 项目自定义
 
-<!-- le-skills:project-custom -->
+<!-- psm:project-custom -->
 <!-- 安装后，项目专属的编码规范（如特定命名约定、架构模式）写在此处 -->

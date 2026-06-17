@@ -21,7 +21,7 @@ User says: "更新更新日志为 vx.x.x" or "发布新版本" or "打 tag" or e
 Before executing, check if `.agents/rules/version-management-rules.md` exists:
 
 - **Exists:** Load it first — it may contain project-specific version numbering, CHANGELOG format, or release process customizations. Apply those rules instead of the defaults below.
-- **Missing:** Use the default flow below. Consider suggesting the user run `npx le-skills install --preview` to detect and extract version management rules from AGENTS.md/CLAUDE.md.
+- **Missing:** Use the default flow below. Consider suggesting the user run `npx psm install --preview` to detect and extract version management rules from AGENTS.md/CLAUDE.md.
 
 > **Note:** If the project has custom version management rules in AGENTS.md/CLAUDE.md that were not extracted to `.agents/rules/version-management-rules.md`, the behavior may be inconsistent. Recommend extraction for consistency.
 

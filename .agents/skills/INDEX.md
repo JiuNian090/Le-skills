@@ -1,7 +1,7 @@
 # 技能树 INDEX
 
 > 🎯 **任何 AI Agent / AI IDE 的统一导航入口** — 安装后优先读取此文件了解技能结构
-> 由 le-skills install 自动生成 — 运行 `npx le-skills install --yes` 重新生成
+> 由 psm install 自动生成 — 运行 `npx psm install --yes` 重新生成
 
 ---
 
@@ -70,4 +70,4 @@ L0: managing-project-skills（根节点 — 用户入口）
 | `bootstrap.js` | 跨平台项目检测 + 技能安装状态 + 引导提示 | `scripts/bootstrap.js` |
 | `bootstrap.sh` | Linux/macOS 版项目检测 | `scripts/bootstrap.sh` |
 
-> **注意：** 本 INDEX.md 由 le-skills 维护。任何 AI IDE（Cursor / Windsurf / Trae / Claude Code / GitHub Copilot）均可通过读取此文件理解技能树结构。
+> **注意：** 本 INDEX.md 由 psm 维护。任何 AI IDE（Cursor / Windsurf / Trae / Claude Code / GitHub Copilot）均可通过读取此文件理解技能树结构。

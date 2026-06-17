@@ -1,9 +1,11 @@
 {
-  "name": "le-skills",
+  "name": "psm",
   "version": "1.0.0",
   "type": "module",
-  "description": "Project skills & rules manager — one command to install AI agent skills into any project",
+  "description": "PSM (Project Skills Manager) — one command to install AI agent skills & rules into any project",
   "keywords": [
+    "psm",
+    "project-skills-manager",
     "ai-skills",
     "project-skills",
     "agent-skills",
@@ -21,7 +23,7 @@
   "license": "MIT",
   "author": "JiunianTV",
   "bin": {
-    "le-skills": "bin/le-skills.js"
+    "psm": "bin/psm.js"
   },
   "files": [
     "bin/",

@@ -1,5 +1,5 @@
-<!-- le-skills:auto-generated version=1.0 -->
-<!-- 本文件由 le-skills install 生成。安装时如检测到 AGENTS.md/CLAUDE.md 有版本管理规则，会提取到此文件 -->
+<!-- psm:auto-generated version=1.0 -->
+<!-- 本文件由 psm install 生成。安装时如检测到 AGENTS.md/CLAUDE.md 有版本管理规则，会提取到此文件 -->
 
 # 版本管理规则
 
@@ -69,17 +69,17 @@ git log <last-tag>..HEAD --oneline      # 获取期间提交
 
 ## ⚠️ 冲突处理
 
-> 以下场景由 le-skills install 检测并交互处理
+> 以下场景由 psm install 检测并交互处理
 
 | 检测到的冲突 | 处理方式 |
 |------------|---------|
 | AGENTS.md 已有版本管理章节（"版本管理规则""版本更新""Versioning"） | 询问：提取到本文件并替换为引用 / 保留原有 / 合并 |
-| CHANGELOG.md 已有不同格式 | 询问：使用 le-skills 格式 / 保留现有格式 |
+| CHANGELOG.md 已有不同格式 | 询问：使用 psm 格式 / 保留现有格式 |
 | 项目已有 `npm version` / `standard-version` 等工具 | 询问：集成到流程 / 跳过 |
 
 ---
 
 ## 📝 项目自定义
 
-<!-- le-skills:project-custom -->
+<!-- psm:project-custom -->
 <!-- 安装后，项目专属的版本管理规则（如特殊版本号格式、发布流程）写在此处 -->

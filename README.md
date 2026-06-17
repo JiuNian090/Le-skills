@@ -1,37 +1,38 @@
-# Le-Skills
+# PSM (Project Skills Manager)
 
-[![npm version](https://img.shields.io/npm/v/le-skills?color=blue)](https://www.npmjs.com/package/le-skills)
-[![npm downloads](https://img.shields.io/npm/dm/le-skills?color=blue)](https://www.npmjs.com/package/le-skills)
-[![license](https://img.shields.io/npm/l/le-skills?color=green)](LICENSE)
+[![npm version](https://img.shields.io/npm/v/psm?color=blue)](https://www.npmjs.com/package/psm)
+[![npm downloads](https://img.shields.io/npm/dm/psm?color=blue)](https://www.npmjs.com/package/psm)
+[![license](https://img.shields.io/npm/l/psm?color=green)](LICENSE)
 
-作者自建使用的 AI Agent Skills & Rules 集合。**一行命令安装到任何项目**，自动匹配技术栈、生成规则文件。
+> **PSM** = **P**roject **S**kills **M**anager — AI Agent 技能与规则管理工具。
+一行命令安装到任何项目，自动匹配技术栈、生成规则文件。
 
 ---
 
 ## 快速安装
 
 ```bash
-npx le-skills install
+npx psm install
 ```
 
 安装到其他目录：
 
 ```bash
-npx le-skills install ../my-project
+npx psm install ../my-project
 ```
 
 ## CLI 命令参考
 
 | 命令 | 作用 |
 |------|------|
-| `npx le-skills install [-y] [target]` | 安装技能和规则到目标项目 |
-| `npx le-skills check [target]` | 检测安装状态并展示报告 |
-| `npx le-skills info [target]` | 显示版本、环境、安装详情 |
-| `npx le-skills list` | 显示当前包中包含的技能清单 |
-| `npx le-skills outdated` | 检查 npm 是否有新版本 |
-| `npx le-skills update` | 自更新到最新版本 |
-| `npx le-skills version` | 显示版本号 |
-| `npx le-skills help` | 显示帮助 |
+| `npx psm install [-y] [target]` | 安装技能和规则到目标项目 |
+| `npx psm check [target]` | 检测安装状态并展示报告 |
+| `npx psm info [target]` | 显示版本、环境、安装详情 |
+| `npx psm list` | 显示当前包中包含的技能清单 |
+| `npx psm outdated` | 检查 npm 是否有新版本 |
+| `npx psm update` | 自更新到最新版本 |
+| `npx psm version` | 显示版本号 |
+| `npx psm help` | 显示帮助 |
 
 ### 选项
 
@@ -44,7 +45,7 @@ npx le-skills install ../my-project
 ### 方式一：npx（推荐）
 
 ```bash
-npx le-skills install
+npx psm install
 ```
 
 无需全局安装，零依赖，自动下载并运行。
@@ -52,19 +53,19 @@ npx le-skills install
 ### 方式二：Git 子目录复制
 
 ```bash
-git clone --depth 1 https://github.com/JiunianTV/Le-Skills.git .le-skills-tmp
-cp -r .le-skills-tmp/.agents ./your-project/
-cp -r .le-skills-tmp/scripts ./your-project/
-rm -rf .le-skills-tmp
+git clone --depth 1 https://github.com/JiunianTV/Le-Skills.git .psm-tmp
+cp -r .psm-tmp/.agents ./your-project/
+cp -r .psm-tmp/scripts ./your-project/
+rm -rf .psm-tmp
 ```
 
 ### 方式三：Git subtree（跟踪上游更新）
 
 ```bash
-git subtree add --prefix=.le-skills \
+git subtree add --prefix=.psm \
   https://github.com/JiunianTV/Le-Skills.git main --squash
-ln -sf .le-skills/.agents .agents
-ln -sf .le-skills/scripts scripts
+ln -sf .psm/.agents .agents
+ln -sf .psm/scripts scripts
 ```
 
 ## 安装后的下一步
@@ -84,9 +85,9 @@ bash scripts/bootstrap.sh
 ## 目录结构
 
 ```
-Le-Skills/
+PSM/
 ├── bin/
-│   └── le-skills.js              # CLI 入口（npm 发布）
+│   └── psm.js              # CLI 入口（npm 发布）
 ├── .agents/
 │   ├── skills/                   # 规范化技能（每个 SKILL.md 含 YAML frontmatter）
 │   │   ├── INDEX.md              # 技能清单
@@ -121,7 +122,7 @@ Le-Skills/
 ```yaml
 # .github/workflows/check-skills.yml
 steps:
-  - run: npx le-skills check   # 使用 npx
+  - run: npx psm check   # 使用 npx
   - run: bash scripts/bootstrap.sh --check  # 或直接使用脚本
 ```
 
