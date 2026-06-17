@@ -107,5 +107,52 @@
   "customSources": {
     "description": "用户可在此添加自定义技能源。安装时此文件不会被覆盖。",
     "hint": "在项目根目录创建 .agents/skills-config.json 覆盖此列表"
+  },
+  "tools": {
+    "description": "技能依赖的工具定义 — CLI 和 MCP 两种安装方式",
+    "items": [
+      {
+        "name": "codegraph",
+        "description": "代码图谱：符号搜索、调用图、影响分析",
+        "homepage": "https://github.com/colbymchenry/codegraph",
+        "checkCommand": "codegraph --version 2>/dev/null || echo 'not-found'",
+        "cli": {
+          "description": "安装脚本（推荐，无需 Node.js）或 npm 全局安装",
+          "commands": [
+            "curl -fsSL https://raw.githubusercontent.com/colbymchenry/codegraph/main/install.sh | sh",
+            "npm i -g @colbymchenry/codegraph"
+          ],
+          "postInstall": "codegraph install"
+        },
+        "mcp": {
+          "description": "运行 codegraph install 自动配置当前 IDE 的 MCP",
+          "autoSetup": true,
+          "note": "支持 Claude Code / Cursor / Windsurf / Codex CLI 等"
+        },
+        "tags": ["code-analysis", "graph", "search"]
+      },
+      {
+        "name": "gitnexus",
+        "description": "Git 代码智能：blame、日志分析、变更影响",
+        "homepage": "https://github.com/abhigyanpatwari/GitNexus",
+        "checkCommand": "gitnexus --version 2>/dev/null || echo 'not-found'",
+        "cli": {
+          "description": "npm 全局安装",
+          "commands": [
+            "npm install -g gitnexus@latest"
+          ],
+          "postInstall": "gitnexus setup"
+        },
+        "mcp": {
+          "description": "通过 npx 启动 MCP 服务器，自动配置到 IDE",
+          "config": {
+            "command": "npx",
+            "args": ["-y", "gitnexus@latest", "mcp"]
+          },
+          "note": "支持 Claude Code / Cursor / Windsurf 等"
+        },
+        "tags": ["git", "intelligence", "analysis"]
+      }
+    ]
   }
 }

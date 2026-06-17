@@ -178,7 +178,7 @@ Show the user a structured summary:
   □ skill-lifecycle-rules.md
   □ skill-scheduling-rules.md
   □ changelog-rules.md
-  □ project-rules.md
+  □ project-rules.md              ← 根据项目技术栈动态生成代码规范
   □ version-management-rules.md  ← 如 AGENTS.md 中有版本管理规则
   □ code-standards-rules.md      ← 如 AGENTS.md 中有代码规范规则
 
@@ -222,14 +222,23 @@ After the user confirms (with or without modifications), proceed with the approv
 
 Delete `.trae/skills/`, `skills/`, `.skills/` **only if** all content has been migrated and no self-managed tools remain.
 
-### 9. MCP Dependency Resolution
+### 9. Tool Dependency Resolution
 
-For each skill that declares MCP tool requirements:
+For each skill that declares `requires_tools` in its frontmatter:
 
-1. **Check available MCPs** — scan the IDE / tool config (`.mcp.json`, MCP config files, connected MCP servers) for a matching capability. If found → **done**, no further action needed.
-2. **No MCP found?** — ask the user: "技能 xxx 需要 Y 能力，当前环境没有对应的 MCP 服务。是否需要安装 CLI 工具替代？"
-   - 用户同意 → 按优先级找：官方 CLI → 社区 CLI 包装器 → HTTP API → 等效 CLI 工具
-   - 用户拒绝 → 记录到 INDEX.md 作为 "能力缺失：xxx（用户选择不安装替代工具）"
+1. **Check tools.json** — read `.agents/tools.json` to see if the tool has been installed or configured before
+2. **Check system PATH** — run `psm tool list [target]` to see which tools are available
+3. **If not found** — ask the user: "技能 xxx 需要 Y 能力，要安装吗？"
+   - 使用 `npx psm tool install <name>` 进行交互式安装（CLI 或 MCP，用户自选）
+   - 安装完成后自动更新 `.agents/tools.json`
+4. **Batch check** — run `npx psm tool setup` to scan all installed skills and install missing tools in one go
+
+**工具定义来源：** `.agents/skills-registry.json` 中的 `tools` 字段，每个工具定义了：
+- `checkCommand` — 检测是否已安装
+- `cli` — CLI 安装命令和安装后配置
+- `mcp` — MCP 服务器配置方式（command + args）
+
+**自管理工具**（如 GitNexus、CodeGraph）：它们有自己的 CLI 来管理技能和更新，通过 `psm tool install` 安装后，其技能由自身 CLI 管理，PSM 不做迁移。
 
 ### 10. Generate INDEX.md
 

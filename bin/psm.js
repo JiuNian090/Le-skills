@@ -481,6 +481,53 @@ function generateIndexMd(target) {
   return md;
 }
 
+// ---- Project Rules Generation ----
+
+/**
+ * Mapping from project type (as returned by detectProjectType) to
+ * tech-stack code standards template file.
+ */
+const TECH_STACK_TEMPLATES = {
+  'Node.js / Frontend': 'code-standards-node.md',
+  'Python': 'code-standards-python.md',
+  'Rust': 'code-standards-rust.md',
+  'Go': 'code-standards-go.md',
+};
+
+/**
+ * Generate a tech-stack-aware project-rules.md for the target project.
+ * Combines the base template with the matching code standards snippet.
+ */
+function generateProjectRules(target) {
+  const templateDir = path.join(PKG_DIR, '.agents', 'rules', 'templates');
+  const baseTemplate = path.join(templateDir, 'project-rules-base.md');
+  
+  if (!fs.existsSync(baseTemplate)) {
+    console.log(yellow('  project-rules.md 模板未找到，跳过动态生成'));
+    return null;
+  }
+
+  let content = fs.readFileSync(baseTemplate, 'utf-8');
+  const projectType = detectProjectType(target);
+  const snippetName = TECH_STACK_TEMPLATES[projectType];
+
+  if (snippetName) {
+    const snippetPath = path.join(templateDir, snippetName);
+    if (fs.existsSync(snippetPath)) {
+      const snippet = fs.readFileSync(snippetPath, 'utf-8');
+      content = content.replace('<!-- psm:code-standards -->', snippet);
+      console.log(green(`  project-rules.md → ${projectType} 规范已注入`));
+    }
+  } else {
+    // Unknown project type: inject a minimal generic section
+    const generic = `<!-- psm:tech-stack-rules -->\n### 代码规范\n\n- 遵循项目已有代码风格（由 linters/formatters 强制执行）\n- 错误处理分级：用户可见错误 / 控制台日志 / 静默容错\n- 用户输入必须校验\n- 不硬编码密钥，通过环境变量注入\n`;
+    content = content.replace('<!-- psm:code-standards -->', generic);
+    console.log(yellow(`  project-rules.md → ${projectType}，使用通用规范`));
+  }
+
+  return content;
+}
+
 // ---- Rule Extraction (AGENTS.md + CLAUDE.md) ----
 
 /**
@@ -901,6 +948,11 @@ ${cyan('Registry commands:')}
   npx psm registry              List all skill sources from registry
   npx psm discover [target]     Show skills matching this project's tech stack
 
+${cyan('Tool commands:')}
+  npx psm tool list [target]            List tools & installation status
+  npx psm tool install <name> [target]  Install a tool (CLI or MCP)
+  npx psm tool setup [target]           Scan skills & install missing tools
+
 ${cyan('Examples:')}
   npx psm install                  Install into current directory
   npx psm install ../my-app        Install into ../my-app
@@ -910,6 +962,9 @@ ${cyan('Examples:')}
   npx psm info                     Show version + env + status
   npx psm registry                 List available skill sources
   npx psm discover                 Discover matching skills for this project
+  npx psm tool list                List tools and their status
+  npx psm tool install codegraph   Install codegraph (CLI or MCP)
+  npx psm tool setup               Auto-detect and install missing tools
 `);
 }
 
@@ -1020,6 +1075,273 @@ function cmdDiscover(targetDir) {
 
   if (!always.length && !matched.length && !selfManaged.length && !userConfig.customSources.length) {
     console.log('  No skills matched your project.\n');
+  }
+}
+
+// ---- Tool Management ----
+
+/**
+ * Read tool definitions from the skills registry.
+ */
+function readToolRegistry() {
+  const registry = readRegistry();
+  return registry?.tools?.items || [];
+}
+
+/**
+ * Read the tool index from a target project.
+ * Returns a map of tool name → { installed, mode, version }.
+ */
+function readToolIndex(target) {
+  const indexPath = path.join(target || '.', '.agents', 'tools.json');
+  if (!fs.existsSync(indexPath)) return {};
+  try {
+    return JSON.parse(fs.readFileSync(indexPath, 'utf-8'));
+  } catch {
+    return {};
+  }
+}
+
+/**
+ * Write the tool index to a target project.
+ */
+function writeToolIndex(target, index) {
+  const dir = path.join(target, '.agents');
+  fs.mkdirSync(dir, { recursive: true });
+  fs.writeFileSync(path.join(dir, 'tools.json'), JSON.stringify(index, null, 2), 'utf-8');
+}
+
+/**
+ * Check if a tool is currently available on the system PATH.
+ */
+function checkToolAvailable(name) {
+  try {
+    const result = execSync(`${process.platform === 'win32' ? 'where' : 'which'} ${name}`, {
+      encoding: 'utf-8',
+      timeout: 3000,
+      stdio: ['ignore', 'pipe', 'pipe'],
+    });
+    return result.trim().length > 0;
+  } catch {
+    return false;
+  }
+}
+
+/**
+ * Get the version of an installed tool.
+ */
+function getToolVersion(name) {
+  try {
+    const result = execSync(`${name} --version`, {
+      encoding: 'utf-8',
+      timeout: 3000,
+      stdio: ['ignore', 'pipe', 'pipe'],
+    });
+    return result.trim().split('\n')[0];
+  } catch {
+    return 'unknown';
+  }
+}
+
+// ---- cmd: tool install ----
+
+async function cmdToolInstall(toolName, targetDir) {
+  const target = path.resolve(targetDir || process.cwd());
+  const tools = readToolRegistry();
+  const tool = tools.find(t => t.name === toolName);
+
+  if (!tool) {
+    die(`未知工具: ${toolName}。可用工具: ${tools.map(t => t.name).join(', ')}`);
+  }
+
+  console.log(`\n${green(`安装工具: ${tool.name}`)}`);
+  console.log(`  ${tool.description}`);
+  console.log(`  ${dim(tool.homepage)}\n`);
+
+  // Check if already installed
+  if (checkToolAvailable(toolName)) {
+    const ver = getToolVersion(toolName);
+    console.log(green(`${toolName} 已安装 (${ver})`));
+    const index = readToolIndex(target);
+    index[toolName] = { installed: true, mode: 'cli', version: ver, updatedAt: new Date().toISOString() };
+    writeToolIndex(target, index);
+    return;
+  }
+
+  // Ask: CLI or MCP?
+  const options = [];
+  if (tool.cli) options.push(`CLI — ${tool.cli.description}`);
+  if (tool.mcp) options.push(`MCP — ${tool.mcp.description}`);
+  options.push('取消');
+
+  const choice = await askChoice(`选择 ${tool.name} 的安装方式`, options);
+
+  if (choice === options.length - 1) {
+    console.log(cyan('  → 取消安装'));
+    return;
+  }
+
+  const isCli = choice === 0;
+
+  if (isCli && tool.cli) {
+    console.log(`\n${cyan(`安装 CLI: ${tool.cli.commands[0]}`)}`);
+    for (const cmd of tool.cli.commands) {
+      try {
+        console.log(dim(`$ ${cmd}`));
+        execSync(cmd, { stdio: 'inherit', timeout: 120000 });
+      } catch {
+        console.log(yellow(`  ⚠ 命令执行失败: ${cmd}`));
+        if (!await askYesNo('继续尝试下一个安装方式？', false)) {
+          return;
+        }
+      }
+    }
+
+    // Post-install setup
+    if (tool.cli.postInstall && checkToolAvailable(toolName)) {
+      console.log(`\n${cyan('运行安装后配置...')}`);
+      try {
+        execSync(tool.cli.postInstall, { stdio: 'inherit', timeout: 60000 });
+      } catch {
+        console.log(yellow(`  ⚠ 安装后配置失败: ${tool.cli.postInstall}`));
+      }
+    }
+
+    // Verify
+    if (checkToolAvailable(toolName)) {
+      const ver = getToolVersion(toolName);
+      console.log(green(`\n${tool.name} CLI 安装成功 (${ver})`));
+      const index = readToolIndex(target);
+      index[toolName] = { installed: true, mode: 'cli', version: ver, updatedAt: new Date().toISOString() };
+      writeToolIndex(target, index);
+    } else {
+      console.log(yellow(`\n⚠ ${tool.name} 安装可能未完成，请检查后重试。`));
+    }
+  } else if (!isCli && tool.mcp) {
+    console.log(`\n${cyan('配置 MCP 服务器...')}`);
+
+    // Try auto-setup first
+    if (tool.mcp.autoSetup) {
+      try {
+        console.log(dim(`$ ${tool.cli?.postInstall || 'codegraph install'}`));
+        execSync(tool.cli?.postInstall || 'codegraph install', { stdio: 'inherit', timeout: 60000 });
+      } catch {
+        console.log(yellow('  自动配置失败，尝试手动配置。'));
+      }
+    }
+
+    // If there's a direct MCP config, show it
+    if (tool.mcp.config) {
+      console.log(`\n${cyan('MCP 配置方式:')}`);
+      console.log(`  ${JSON.stringify(tool.mcp.config, null, 2)}`);
+      console.log(`\n${dim('请将以上配置添加到你的 IDE 的 MCP 配置文件中。')}`);
+      console.log(dim('Cursor: ~/.cursor/mcp.json'));
+      console.log(dim('Windsurf: ~/.windsurf/mcp.json'));
+      console.log(dim('Claude Code: claude mcp add'));
+    }
+
+    const index = readToolIndex(target);
+    index[toolName] = { installed: true, mode: 'mcp', updatedAt: new Date().toISOString() };
+    writeToolIndex(target, index);
+    console.log(green(`\n${tool.name} MCP 配置已记录`));
+  }
+}
+
+// ---- cmd: tool list ----
+
+function cmdToolList(targetDir) {
+  const target = path.resolve(targetDir || process.cwd());
+  const tools = readToolRegistry();
+  const index = readToolIndex(target);
+
+  if (tools.length === 0) {
+    console.log(yellow('注册中心中未定义工具。'));
+    return;
+  }
+
+  console.log(`\n${green('工具清单')}\n`);
+  for (const t of tools) {
+    const available = checkToolAvailable(t.name);
+    const recorded = index[t.name];
+    const status = available ? green('✓ 已安装') : recorded ? yellow(`已记录 (${recorded.mode})`) : dim('未安装');
+    const ver = available ? ` (${getToolVersion(t.name)})` : '';
+    console.log(`  ${cyan(t.name)} ${status}${ver}`);
+    console.log(`      ${t.description}`);
+    if (available || recorded) {
+      const mode = recorded?.mode || 'cli';
+      console.log(`      方式: ${mode}`);
+    }
+    console.log();
+  }
+}
+
+// ---- cmd: tool setup ----
+
+async function cmdToolSetup(targetDir) {
+  const target = path.resolve(targetDir || process.cwd());
+  const tools = readToolRegistry();
+  const index = readToolIndex(target);
+
+  // Scan skills for requires_tools
+  const skillsDir = path.join(target, '.agents', 'skills');
+  const requiredTools = new Set();
+
+  // Add tools from registry self-managed sources (they depend on their own CLI)
+  const registry = readRegistry();
+  if (registry) {
+    for (const src of registry.sources) {
+      if (src.selfManaged) {
+        requiredTools.add(src.name);
+      }
+    }
+  }
+
+  // Scan installed skills for requires_tools in frontmatter
+  if (fs.existsSync(skillsDir)) {
+    for (const entry of fs.readdirSync(skillsDir, { withFileTypes: true })) {
+      if (!entry.isDirectory()) continue;
+      const skillMd = path.join(skillsDir, entry.name, 'SKILL.md');
+      if (!fs.existsSync(skillMd)) continue;
+      const content = fs.readFileSync(skillMd, 'utf-8');
+      // Parse requires_tools from YAML frontmatter
+      const match = content.match(/^requires_tools:\s*$/m);
+      if (match) {
+        const lines = content.slice(match.index).split('\n');
+        for (let i = 1; i < lines.length; i++) {
+          const toolMatch = lines[i].match(/^\s*-\s*(.+)/);
+          if (toolMatch) requiredTools.add(toolMatch[1].trim());
+          else break;
+        }
+      }
+    }
+  }
+
+  if (requiredTools.size === 0) {
+    console.log(green('未检测到需要安装的工具依赖。'));
+    return;
+  }
+
+  console.log(`\n${cyan('检测到以下工具依赖:')}`);
+  for (const t of requiredTools) {
+    const available = checkToolAvailable(t);
+    const recorded = index[t];
+    if (!available && !recorded) {
+      console.log(`  ${yellow(t)} — 未安装`);
+    } else {
+      console.log(`  ${green(t)} — ${available ? '已安装' : `已记录 (${recorded.mode})`}`);
+    }
+  }
+
+  for (const t of requiredTools) {
+    if (!checkToolAvailable(t) && !index[t]) {
+      console.log();
+      const ok = await askYesNo(`安装 ${t}？`, true);
+      if (ok) {
+        await cmdToolInstall(t, target);
+      } else {
+        console.log(cyan(`  → 跳过 ${t}`));
+      }
+    }
   }
 }
 
@@ -1159,6 +1481,14 @@ async function cmdInstall(targetDir, opts = {}) {
     const dest = path.join(target, '.agents');
     const result = await safeCopyRecursive(AGENTS_SRC, dest, '.agents', autoYes);
     console.log(green(`.agents/ 复制完成：${result.copied} 新增, ${result.replaced} 替换, ${result.kept} 跳过`));
+
+    // ── Generate tech-stack-aware project-rules.md ──
+    const projectRulesContent = generateProjectRules(target);
+    if (projectRulesContent) {
+      const prPath = path.join(target, '.agents', 'rules', 'project-rules.md');
+      fs.writeFileSync(prPath, projectRulesContent, 'utf-8');
+      console.log(green('  project-rules.md 已根据技术栈生成'));
+    }
   }
 
   // ── Save extracted rules (version + standards) ──
@@ -1216,6 +1546,31 @@ async function cmdInstall(targetDir, opts = {}) {
   const indexDest = path.join(target, '.agents', 'skills', 'INDEX.md');
   fs.writeFileSync(indexDest, indexContent, 'utf-8');
   console.log(green('INDEX.md 已生成'));
+
+  // ── Check tool dependencies ──
+  console.log(`\n${cyan('═══ 检查工具依赖 ═══')}\n`);
+  const registry = readRegistry();
+  if (registry?.tools?.items) {
+    const index = readToolIndex(target);
+    for (const t of registry.tools.items) {
+      const available = checkToolAvailable(t.name);
+      const recorded = index[t.name];
+      if (!available && !recorded) {
+        console.log(`  ${yellow(t.name)} — ${t.description}`);
+        if (!autoYes) {
+          const ok = await askYesNo(`安装 ${t.name}？`, true);
+          if (ok) {
+            await cmdToolInstall(t.name, target);
+          } else {
+            console.log(cyan(`  → 跳过 ${t.name}`));
+          }
+        }
+      } else {
+        console.log(`  ${green(t.name)} ${available ? '✓ 已安装' : '✓ 已记录'}`);
+      }
+    }
+  }
+  console.log();
 
   // ── Done ──
   const hasNodeBootstrap = fs.existsSync(path.join(target, 'scripts', 'bootstrap.js'));
@@ -1398,6 +1753,21 @@ function main() {
     case 'discover':
       cmdDiscover(args[1]);
       break;
+    case 'tool': {
+      const sub = args[1];
+      if (sub === 'install') {
+        const toolName = args[2];
+        if (!toolName) die('用法: psm tool install <工具名> [target]');
+        cmdToolInstall(toolName, args[3]);
+      } else if (sub === 'list') {
+        cmdToolList(args[2]);
+      } else if (sub === 'setup') {
+        cmdToolSetup(args[2]);
+      } else {
+        die(`未知 tool 子命令: ${sub}。可用: install, list, setup`);
+      }
+      break;
+    }
     case 'outdated':
       cmdOutdated();
       break;
